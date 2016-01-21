@@ -25,6 +25,8 @@
 #include <openssl/md5.h> /* md5 hash */
 #include <openssl/sha.h> /* sha1 hash */
 #include "websocket.h"
+#include "b64_pton.h"
+#include "b64_ntop.h"
 
 /*
  * Global state

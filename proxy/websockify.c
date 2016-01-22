@@ -8,6 +8,7 @@
  * as taken from http://docs.python.org/dev/library/ssl.html#certificates
  */
 #include <stdio.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <limits.h>
 #include <getopt.h>
@@ -21,6 +22,18 @@
 #include <mw/msg.h>
 #include <mw/shm.h>
 
+uint8_t proxy_debug = 0;
+
+void pdbg(char *format, ...)
+{
+    if (!proxy_debug) return;
+
+    va_list args;
+
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
 
 char traffic_legend[] = "\n\
 Traffic Legend:\n\
@@ -35,8 +48,9 @@ Traffic Legend:\n\
 ";
 
 char USAGE[] = "Usage: [options] " \
-               "[source_addr:]source_port target_addr:target_port\n\n" \
+               "[source_addr:]source_port \n\n" \
                "  --verbose|-v       verbose messages and per frame traffic\n" \
+               "  --debug|-d         debug proxy messages\n" \
                "  --daemon|-D        become a daemon (background process)\n" \
                "  --cert CERT        SSL certificate file\n" \
                "  --key KEY          SSL key file (if separate from cert)\n" \
@@ -47,58 +61,152 @@ char USAGE[] = "Usage: [options] " \
     fprintf(stderr, fmt , ## args); \
     exit(1);
 
-char target_host[256];
-int target_port;
-
 extern pipe_error;
 extern settings_t settings;
 
-void do_proxy(ws_ctx_t *ws_ctx, int target) {
+//this faction is executed for all outgoing data (messages)
+//format: data_length (uint8_t) + message_id (uin8_t) + data (uint8_t*)
+int ws_msg_serialize(char *target, const struct S_MSG *msg) {
+    uint8_t i;
+
+    target[0] = msg->size;
+    target[1] = msg->message_id;
+
+    for (i=0;i<msg->size;i++)
+        target[i+2] = msg->data[i];
+
+    pdbg("Constructed message: %.*s\n",target,i+2);
+    return i+2;
+}
+
+
+//each transmission starts with:
+//  1) filter length (uint8_t)
+//  2) filter array (uint8_t*)
+// and follows by stream of data (repetitive):
+//  3) data_length (uint8_t)
+//  4) message_id (uint8_t)
+//  5) data (uint8_t*)
+
+//this function will be executed for all incoming data
+int ws_msg_parse(struct S_MSG *target, const char *buf, int buf_len) {
+   // pdbg("Parsing message: %.*s\n",buf,buf_len);
+    uint8_t state = 0;
+    int i=0;
+    uint8_t j=0;
+
+    if (buf_len<2) return 0;
+    if (buf[0]+1>buf_len) return 0;
+
+    for (i=0;i<buf_len && state<3;i++) {
+        switch (state) {
+            case 0: 
+                target->size = buf[i];
+                state++;
+                break;
+            case 1:
+                target->message_id = buf[i];
+                state++;
+                break;
+            case 2:
+                if (j<target->size) {
+                    target->data[j++] = buf[i];
+                }
+                if (j==target->size) state++;
+                break;
+        }
+    }
+
+
+    if (state==3) //all fine
+        return i;
+
+    target->message_id = 0;
+    return 0;
+}
+
+int8_t ws_msg_parse_filter(uint8_t **shm_filter, uint8_t *shm_filter_length, uint8_t *shm_filter_received, char *buf, int buf_len) {
+    int i;
+    uint8_t *ptr = NULL;
+    if (buf_len<1) return 0; //filter_lenght can be 0
+    if (buf[0]+1>buf_len) return 0;
+    *shm_filter_length = buf[0];
+    pdbg("Got %u filters: ",*shm_filter_length);
+    ptr = (uint8_t*)malloc(*shm_filter_length); 
+    if(ptr== NULL) 
+    {
+        printf("\nERROR: Memory allocation did not complete successfully!"); 
+        return -1;
+    }     
+    for (i=0;i<*shm_filter_length;i++) {
+       ptr[i] = (uint8_t)buf[i+1];
+	   pdbg("%u ",ptr[i]);
+    }
+    pdbg("\n");
+    *shm_filter = ptr;
+    *shm_filter_received = 1;
+    return i+1;
+}
+
+
+char *xx(const uint8_t *s, int len) {
+    static char buf[0xFF];
+        int i;
+
+    if (len>(0xFF/3)) {  //3 bytes for every character in s
+        sprintf(buf,"[STRING TOO LONG]\0");
+        return buf;
+    }
+
+        for (i = 0; i < len; ++i) sprintf(buf+(3*i),"%02x ", s[i]);
+    buf[3*i] = '\0';
+
+    return buf;
+}
+
+void do_proxy(ws_ctx_t *ws_ctx) {
     fd_set rlist, wlist, elist;
     struct timeval tv;
-    int i, maxfd, client = ws_ctx->sockfd;
+    int maxfd, client = ws_ctx->sockfd;
     unsigned int opcode, left, ret;
     unsigned int tout_start, tout_end, cout_start, cout_end;
     unsigned int tin_start, tin_end;
     ssize_t len, bytes;
 
-    tout_start = tout_end = cout_start = cout_end;
-    tin_start = tin_end = 0;
-    maxfd = client > target ? client+1 : target+1;
+    struct S_MSG msg;
 
-    while (1) {
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
+    uint8_t shm_filter_received = 0;
+    uint8_t shm_filter_length = 0;
+    uint8_t *shm_filter;
+    uint8_t stop = 0;
+
+    tout_start = tout_end = cout_start = cout_end = 0;
+    tin_start = tin_end = 0;
+    maxfd = client+1;
+
+
+    shm_client_init();
+    pdbg("Starting proxy loop\n");
+    while (!stop) {
+        tv.tv_sec = 0;
+        tv.tv_usec = 2000000; //every 50ms
 
         FD_ZERO(&rlist);
         FD_ZERO(&wlist);
         FD_ZERO(&elist);
 
         FD_SET(client, &elist);
-        FD_SET(target, &elist);
 
-        if (tout_end == tout_start) {
-            // Nothing queued for target, so read from client
-            FD_SET(client, &rlist);
-        } else {
-            // Data queued for target, so write to it
-            FD_SET(target, &wlist);
-        }
-        if (cout_end == cout_start) {
-            // Nothing queued for client, so read from target
-            FD_SET(target, &rlist);
-        } else {
-            // Data queued for client, so write to it
+
+        //monitor client always for reading
+        FD_SET(client, &rlist);
+
+        if (cout_end != cout_start) //monitor client for writing only if we have data to write
             FD_SET(client, &wlist);
-        }
 
         ret = select(maxfd, &rlist, &wlist, &elist, &tv);
-        if (pipe_error) { break; }
+        if (pipe_error) { stop=1; break; }
 
-        if (FD_ISSET(target, &elist)) {
-            handler_emsg("target exception\n");
-            break;
-        }
         if (FD_ISSET(client, &elist)) {
             handler_emsg("client exception\n");
             break;
@@ -106,34 +214,42 @@ void do_proxy(ws_ctx_t *ws_ctx, int target) {
 
         if (ret == -1) {
             handler_emsg("select(): %s\n", strerror(errno));
+            stop = 1;
             break;
-        } else if (ret == 0) {
-            //handler_emsg("select timeout\n");
-            continue;
-        }
-
-        if (FD_ISSET(target, &wlist)) {
-            len = tout_end-tout_start;
-            bytes = send(target, ws_ctx->tout_buf + tout_start, len, 0);
-            if (pipe_error) { break; }
-            if (bytes < 0) {
-                handler_emsg("target connection error: %s\n",
-                             strerror(errno));
-                break;
+        } else if ((ret == 0) && (cout_start==cout_end)) { //select timeout - try reading from target only if we have sent out everything
+            pdbg("Trying to read from target...\n");
+            bytes = 0;
+            //cout_start = 0; //this is done when client write is complete
+            while (shm_scan_incoming(&msg) && bytes<256) { //we got a message //dont retrieve more than 256 bytes at ones (per proxy loop)
+                pdbg("From target: writing into cin_buf+%zd\n",bytes);
+                bytes += ws_msg_serialize(ws_ctx->cin_buf+bytes,&msg);
             }
-            tout_start += bytes;
-            if (tout_start >= tout_end) {
-                tout_start = tout_end = 0;
-                traffic(">");
+            if (pipe_error) { stop=1; break; }
+            pdbg("From target: encoding %zd bytes from cin_buf into cout_buf\n",bytes);
+            if (ws_ctx->hybi) {
+                cout_end = encode_hybi(ws_ctx->cin_buf, bytes,
+                                ws_ctx->cout_buf, BUFSIZE, 1);
             } else {
-                traffic(">.");
-            }
+                cout_end = encode_hixie(ws_ctx->cin_buf, bytes,
+                                ws_ctx->cout_buf, BUFSIZE);
+                }
+            if (bytes < 0) {
+                handler_emsg("encoding error\n");
+                stop = 1;
+                break;
+            } else {
+                pdbg("From target: done; encoded %u bytes.\n",cout_end);
+                traffic("{");                          
+            }         
+            continue;
         }
 
         if (FD_ISSET(client, &wlist)) {
             len = cout_end-cout_start;
+            pdbg("Trying to write to client %zd bytes from cout_buf+%u\n",len,cout_start);
             bytes = ws_send(ws_ctx, ws_ctx->cout_buf + cout_start, len);
-            if (pipe_error) { break; }
+            pdbg("To client: sent %zd bytes.\n",bytes);
+            if (pipe_error) { stop=1; break; }
             if (len < 3) {
                 handler_emsg("len: %d, bytes: %d: %d\n",
                              (int) len, (int) bytes,
@@ -143,81 +259,47 @@ void do_proxy(ws_ctx_t *ws_ctx, int target) {
             if (cout_start >= cout_end) {
                 cout_start = cout_end = 0;
                 traffic("<");
-            } else {
+            } else {                
                 traffic("<.");
             }
         }
 
-        if (FD_ISSET(target, &rlist)) {
-            bytes = recv(target, ws_ctx->cin_buf, DBUFSIZE , 0);
-            if (pipe_error) { break; }
-            if (bytes <= 0) {
-                handler_emsg("target closed connection\n");
-                break;
-            }
-            cout_start = 0;
-            if (ws_ctx->hybi) {
-                cout_end = encode_hybi(ws_ctx->cin_buf, bytes,
-                                   ws_ctx->cout_buf, BUFSIZE, 1);
-            } else {
-                cout_end = encode_hixie(ws_ctx->cin_buf, bytes,
-                                    ws_ctx->cout_buf, BUFSIZE);
-            }
-            /*
-            printf("encoded: ");
-            for (i=0; i< cout_end; i++) {
-                printf("%u,", (unsigned char) *(ws_ctx->cout_buf+i));
-            }
-            printf("\n");
-            */
-            if (cout_end < 0) {
-                handler_emsg("encoding error\n");
-                break;
-            }
-            traffic("{");
-        }
-
         if (FD_ISSET(client, &rlist)) {
-            bytes = ws_recv(ws_ctx, ws_ctx->tin_buf + tin_end, BUFSIZE-1);
-            if (pipe_error) { break; }
+            pdbg("Trying to read from client into tin_buf+%u ...\n",tin_end);
+            bytes = ws_recv(ws_ctx, ws_ctx->tin_buf + tin_end, BUFSIZE-tin_end-1);
+            pdbg("From client read %zd bytes\n",bytes);
+            pdbg("%s\n",xx(ws_ctx->tin_buf + tin_end,bytes));
+            if (pipe_error) { stop=1; break; }
             if (bytes <= 0) {
                 handler_emsg("client closed connection\n");
+                stop = 1;
                 break;
             }
             tin_end += bytes;
-            /*
-            printf("before decode: ");
-            for (i=0; i< bytes; i++) {
-                printf("%u,", (unsigned char) *(ws_ctx->tin_buf+i));
-            }
-            printf("\n");
-            */
+ 
+            pdbg("From client: decoding %u bytes from tin_buf+%u into tout_buf+%u\n",tin_end-tin_start,tin_start,tout_end);
             if (ws_ctx->hybi) {
                 len = decode_hybi(ws_ctx->tin_buf + tin_start,
                                   tin_end-tin_start,
-                                  ws_ctx->tout_buf, BUFSIZE-1,
+                                  ws_ctx->tout_buf+tout_end, BUFSIZE-tout_end-1,
                                   &opcode, &left);
             } else {
                 len = decode_hixie(ws_ctx->tin_buf + tin_start,
                                    tin_end-tin_start,
-                                   ws_ctx->tout_buf, BUFSIZE-1,
+                                   ws_ctx->tout_buf+tout_end, BUFSIZE-tout_end-1,
                                    &opcode, &left);
             }
-
+            pdbg("From client: decoded %zd bytes; left=%u\n",len,left);
+            pdbg("%s\n",xx(ws_ctx->tout_buf+tout_end,len));
             if (opcode == 8) {
                 handler_emsg("client sent orderly close frame\n");
+                stop = 1;
                 break;
             }
 
-            /*
-            printf("decoded: ");
-            for (i=0; i< len; i++) {
-                printf("%u,", (unsigned char) *(ws_ctx->tout_buf+i));
-            }
-            printf("\n");
-            */
             if (len < 0) {
                 handler_emsg("decoding error\n");
+                stop = 1;
                 break;
             }
             if (left) {
@@ -229,60 +311,68 @@ void do_proxy(ws_ctx_t *ws_ctx, int target) {
             }
 
             traffic("}");
+            tout_end += len;
+
+            if (pipe_error) { stop=1; break; }
+            //write immediately to target
+            do {
+                len = tout_end-tout_start;
+                pdbg("To target: sending %zd bytes from tout_buf+%u\n",len,tout_start);
+                if (!shm_filter_received) 
+                    bytes = ws_msg_parse_filter(&shm_filter,&shm_filter_length,&shm_filter_received, ws_ctx->tout_buf + tout_start, len);
+                else bytes = ws_msg_parse(&msg,ws_ctx->tout_buf + tout_start, len);
+                pdbg("To target: parsed %u bytes\n",bytes);
+                if (msg.message_id)
+                    shm_put_outgoing(&msg);
+
+                tout_start += bytes;
+
+                if (bytes) {
+                    if (tout_start < tout_end) traffic(">.");
+                    else if (tout_start == tout_end) traffic(">");                    
+                }
+
+            } while (bytes>0);
+
+            if (bytes<0) { //something terribly wrong happend
+                stop = 1; break; 
+            }
+
+            pdbg("To target: moving %u bytes of tout_buf+%u to front\n",tout_end-tout_start,tout_start);   
+            memmove(ws_ctx->tout_buf,ws_ctx->tout_buf+tout_start,tout_end-tout_start);
+            tout_end -= tout_start;
             tout_start = 0;
-            tout_end = len;
         }
     }
+
+    if ((shm_filter_received) && (shm_filter_length>0))
+        free(shm_filter);
+
+
+    shm_client_end();
 }
 
 void proxy_handler(ws_ctx_t *ws_ctx) {
-    int tsock = 0;
-    struct sockaddr_in taddr;
 
-    handler_msg("connecting to: %s:%d\n", target_host, target_port);
-
-    tsock = socket(AF_INET, SOCK_STREAM, 0);
-    if (tsock < 0) {
-        handler_emsg("Could not create target socket: %s\n",
-                     strerror(errno));
-        return;
-    }
-    bzero((char *) &taddr, sizeof(taddr));
-    taddr.sin_family = AF_INET;
-    taddr.sin_port = htons(target_port);
-
-    /* Resolve target address */
-    if (resolve_host(&taddr.sin_addr, target_host) < -1) {
-        handler_emsg("Could not resolve target address: %s\n",
-                     strerror(errno));
-    }
-
-    if (connect(tsock, (struct sockaddr *) &taddr, sizeof(taddr)) < 0) {
-        handler_emsg("Could not connect to target: %s\n",
-                     strerror(errno));
-        close(tsock);
-        return;
-    }
+    handler_msg("Received connection\n");
 
     if ((settings.verbose) && (! settings.daemon)) {
         printf("%s", traffic_legend);
     }
 
-    do_proxy(ws_ctx, tsock);
-
-    shutdown(tsock, SHUT_RDWR);
-    close(tsock);
+    do_proxy(ws_ctx);
 }
 
 int main(int argc, char *argv[])
 {
-    int fd, c, option_index = 0;
+    int c, option_index = 0;
     static int ssl_only = 0, daemon = 0, run_once = 0, verbose = 0;
     char *found;
     static struct option long_options[] = {
         {"verbose",    no_argument,       &verbose,    'v'},
         {"ssl-only",   no_argument,       &ssl_only,    1 },
         {"daemon",     no_argument,       &daemon,     'D'},
+        {"proxy-debug",     no_argument,       &proxy_debug,     'd'},
         /* ---- */
         {"run-once",   no_argument,       0,           'r'},
         {"cert",       required_argument, 0,           'c'},
@@ -298,7 +388,7 @@ int main(int argc, char *argv[])
     settings.key = "";
 
     while (1) {
-        c = getopt_long (argc, argv, "vDrc:k:",
+        c = getopt_long (argc, argv, "vDdrc:k:",
                          long_options, &option_index);
 
         /* Detect the end */
@@ -310,7 +400,11 @@ int main(int argc, char *argv[])
             case 1:
                 break; // ignore
             case 'v':
-                verbose = 1;
+                verbose = 1;    
+                break;
+            case 'd':
+                dbg_init(0b11111111);            
+                proxy_debug = 1;
                 break;
             case 'D':
                 daemon = 1;
@@ -339,7 +433,7 @@ int main(int argc, char *argv[])
     settings.daemon       = daemon;
     settings.run_once     = run_once;
 
-    if ((argc-optind) != 2) {
+    if ((argc-optind) != 1) {
         usage("Invalid number of arguments\n");
     }
 
@@ -354,17 +448,6 @@ int main(int argc, char *argv[])
     optind++;
     if (settings.listen_port == 0) {
         usage("Could not parse listen_port\n");
-    }
-
-    found = strstr(argv[optind], ":");
-    if (found) {
-        memcpy(target_host, argv[optind], found-argv[optind]);
-        target_port = strtol(found+1, NULL, 10);
-    } else {
-        usage("Target argument must be host:port\n");
-    }
-    if (target_port == 0) {
-        usage("Could not parse target port\n");
     }
 
     if (ssl_only) {
@@ -383,6 +466,10 @@ int main(int argc, char *argv[])
     //printf("  key: %s\n",       settings.key);
 
     settings.handler = proxy_handler; 
+
+
     start_server();
+
+    return 0;
 
 }

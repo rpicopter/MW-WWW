@@ -80,6 +80,7 @@ include('p_'.$current_page.'/content.php');
 <script src="websockify/base64.js"></script>
 <script src="websockify/websock.js"></script>
 <script src="routines.js"></script>
+<script src="multiwii.js"></script>
 
 <script type="text/javascript">
 	$(document).ready(function() {

@@ -20,50 +20,68 @@
 <p class="llabel">currentSet:<span class="value" id="currentSet"/></p>
 </div>
 
-<script type="text/javascript">
 
+
+<script type="text/javascript">
+/* Page functions */
+/* We need to define on_ready function that will connect to our mw proxy */
+/* It will also install handlers (on) to tell us when the connection is established, message arrives etc */
 function on_ready() {
 	ws = new Websock();
         var lip = '<?php echo $host; ?>';
-        console.log(lip);
         ws.on('error',websock_err);
-	ws.on('message',websock_recv)
+		ws.on('message',websock_recv);
+		ws.on('open',start);
         ws.open("ws://"+lip+":8888");
 
-	mw_send(100,[]);
+    mw = new MultiWii();
+}
 
-	setInterval(send_request,1000);
+function start() {
+	console.log("Connected to mw proxy");
+	var msg;
 
+	msg = mw.filters([100,101]); //filters need to be sent as the first message on a new connection to mw proxy
+	ws.send( msg );
+
+	msg = mw.serialize({ //prepere a request message
+		"id": 100
+	});
+	ws.send(msg); //send it
+
+	setInterval(update,1000); //keep sending the requests every second
 }
 
 function websock_err() {
 	console.log("Error: ",arguments);
 }
 
-function send_request() {
+function update() {
+	var msg;
 	$("#current_time").text(get_time()); 
 
-
-	mw_send(101,[]);
+	msg = mw.serialize({
+		"id": 101
+	});
+	ws.send(msg);
+	
 }
 
-function websock_recv() {
+function websock_recv() { //we have received a message
+	var data;
+	do { //receive messages in a loop to ensure we got all of them
+		data = mw_recv();
+		if (data.err == undefined) { //if err is set it means there was a genuine error or we haven't received enough data to proceed yet
+			console.log("Received: ",data);
+			///TODO: populate screen with data
+		} else {
+			//console.log(data.err);
+		}
 
-        var data = msp_recv();
-        if (data.err !== undefined) {
-		websock_err(data.err);
-                return;
-        }
-        if (data.msg) {
-		websock_err(data.err);
-                return;
-        }
-
-
+	} while (data.err == undefined); 
+	
+	
 	$("#update_time").text(get_time()); 
-
-	///TODO: parse and populate
-	console.log("Received: "+data);
 
 }
 

@@ -67,7 +67,7 @@ extern settings_t settings;
 //this faction is executed for all outgoing data (messages)
 //format: data_length (uint8_t) + message_id (uin8_t) + data (uint8_t*)
 int ws_msg_serialize(char *target, const struct S_MSG *msg) {
-    uint8_t i;
+    int i;
 
     target[0] = msg->size;
     target[1] = msg->message_id;
@@ -75,7 +75,6 @@ int ws_msg_serialize(char *target, const struct S_MSG *msg) {
     for (i=0;i<msg->size;i++)
         target[i+2] = msg->data[i];
 
-    pdbg("Constructed message: %.*s\n",target,i+2);
     return i+2;
 }
 
@@ -90,13 +89,15 @@ int ws_msg_serialize(char *target, const struct S_MSG *msg) {
 
 //this function will be executed for all incoming data
 int ws_msg_parse(struct S_MSG *target, const char *buf, int buf_len) {
-   // pdbg("Parsing message: %.*s\n",buf,buf_len);
+    //pdbg("Parsing message: %.*s\n",buf,buf_len);
     uint8_t state = 0;
     int i=0;
     uint8_t j=0;
 
+    target->message_id = 0;
+
     if (buf_len<2) return 0;
-    if (buf[0]+1>buf_len) return 0;
+    if (buf_len<buf[0]+1) return 0;
 
     for (i=0;i<buf_len && state<3;i++) {
         switch (state) {
@@ -106,7 +107,8 @@ int ws_msg_parse(struct S_MSG *target, const char *buf, int buf_len) {
                 break;
             case 1:
                 target->message_id = buf[i];
-                state++;
+                if (!target->size) state+=2;
+                else state++;
                 break;
             case 2:
                 if (j<target->size) {
@@ -189,7 +191,7 @@ void do_proxy(ws_ctx_t *ws_ctx) {
     pdbg("Starting proxy loop\n");
     while (!stop) {
         tv.tv_sec = 0;
-        tv.tv_usec = 2000000; //every 50ms
+        tv.tv_usec = 2500000; //every 50ms
 
         FD_ZERO(&rlist);
         FD_ZERO(&wlist);
@@ -216,6 +218,9 @@ void do_proxy(ws_ctx_t *ws_ctx) {
             handler_emsg("select(): %s\n", strerror(errno));
             stop = 1;
             break;
+        }  
+        // if (ret == 0) {} //select timeout 
+            /*
         } else if ((ret == 0) && (cout_start==cout_end)) { //select timeout - try reading from target only if we have sent out everything
             pdbg("Trying to read from target...\n");
             bytes = 0;
@@ -243,6 +248,7 @@ void do_proxy(ws_ctx_t *ws_ctx) {
             }         
             continue;
         }
+        */
 
         if (FD_ISSET(client, &wlist)) {
             len = cout_end-cout_start;
@@ -317,11 +323,11 @@ void do_proxy(ws_ctx_t *ws_ctx) {
             //write immediately to target
             do {
                 len = tout_end-tout_start;
-                pdbg("To target: sending %zd bytes from tout_buf+%u\n",len,tout_start);
+                pdbg("To target: parsing %zd bytes from tout_buf+%u\n",len,tout_start);
                 if (!shm_filter_received) 
                     bytes = ws_msg_parse_filter(&shm_filter,&shm_filter_length,&shm_filter_received, ws_ctx->tout_buf + tout_start, len);
                 else bytes = ws_msg_parse(&msg,ws_ctx->tout_buf + tout_start, len);
-                pdbg("To target: parsed %u bytes\n",bytes);
+                pdbg("To target: parsed %zd bytes\n",bytes);
                 if (msg.message_id)
                     shm_put_outgoing(&msg);
 
@@ -336,12 +342,41 @@ void do_proxy(ws_ctx_t *ws_ctx) {
 
             if (bytes<0) { //something terribly wrong happend
                 stop = 1; break; 
-            }
+            } 
 
-            pdbg("To target: moving %u bytes of tout_buf+%u to front\n",tout_end-tout_start,tout_start);   
-            memmove(ws_ctx->tout_buf,ws_ctx->tout_buf+tout_start,tout_end-tout_start);
+            if (tout_end-tout_start>0) { //move data only if there is something to move
+                pdbg("To target: moving %u bytes of tout_buf+%u to front\n",tout_end-tout_start,tout_start);   
+                memmove(ws_ctx->tout_buf,ws_ctx->tout_buf+tout_start,tout_end-tout_start);
+            }
             tout_end -= tout_start;
             tout_start = 0;
+        }
+
+        if (cout_start==cout_end) { //try reading from target only if we have sent out everything
+            pdbg("Trying to read from target...\n");
+            bytes = 0;
+            //cout_start = 0; //this is done when client write is complete
+            while (shm_scan_incoming(&msg) && bytes<256) { //we got a message //dont retrieve more than 256 bytes at ones (per proxy loop)
+                pdbg("From target: writing into cin_buf+%zd\n",bytes);
+                bytes += ws_msg_serialize(ws_ctx->cin_buf+bytes,&msg);
+            }
+            if (pipe_error) { stop=1; break; }
+            pdbg("From target: encoding %zd bytes from cin_buf into cout_buf\n",bytes);
+            if (ws_ctx->hybi) {
+                cout_end = encode_hybi(ws_ctx->cin_buf, bytes,
+                                ws_ctx->cout_buf, BUFSIZE, 1);
+            } else {
+                cout_end = encode_hixie(ws_ctx->cin_buf, bytes,
+                                ws_ctx->cout_buf, BUFSIZE);
+                }
+            if (bytes < 0) {
+                handler_emsg("encoding error\n");
+                stop = 1;
+                break;
+            } else {
+                pdbg("From target: done; encoded %u bytes.\n",cout_end);
+                traffic("{");                          
+            }         
         }
     }
 

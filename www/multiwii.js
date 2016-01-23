@@ -26,8 +26,8 @@ function MultiWii() {
 /* Note that this is not the actual MSP protocol. 
 /* The messages from JS are sent to mw server through mw proxy. Proxy and server together will convert them into actual MSP compliant format */
 
-MultiWii.prototype.serialize_id100 = function(dv) {
-	//the data should always start from 2nd byte
+MultiWii.prototype.serialize_id100 = function(dv,data) {
+	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
 	return 0; //length of data
 };
 
@@ -52,7 +52,7 @@ MultiWii.prototype.parse_id100 = function(dv) {
 	return ret;
 };
 
-MultiWii.prototype.serialize_id101 = function(dv) {
+MultiWii.prototype.serialize_id101 = function(dv,data) {
 	return 0;
 };
 
@@ -73,7 +73,7 @@ MultiWii.prototype.parse_id101 = function(dv) {
 	return ret;
 };
 
-MultiWii.prototype.serialize_id108 = function(dv) {
+MultiWii.prototype.serialize_id108 = function(dv,data) {
 	return 0;
 };
 
@@ -103,13 +103,29 @@ MultiWii.prototype.parse_id112 = function(dv) {
 	return ret;
 };
 
-MultiWii.prototype.serialize_id205 = function(dv) {
+MultiWii.prototype.serialize_id202 = function(dv,data) {
+	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
+	for (var i=0;i<MultiWii.PID.length;i++) {
+		var pid = data[ MultiWii.PID[i] ];
+		dv.setUint8(2+3*i,pid["p"]);
+		dv.setUint8(2+3*i+1,pid["i"]);
+		dv.setUint8(2+3*i+2,pid["d"]);
+	}
+	return 3*i;
+};
+
+MultiWii.prototype.serialize_id205 = function(dv,data) {
 	return 0;
 };
 
-MultiWii.prototype.serialize_id206 = function(dv) {
+MultiWii.prototype.serialize_id206 = function(dv,data) {
 	return 0;
 };
+
+MultiWii.prototype.serialize_id208 = function(dv,data) {
+	return 0;
+};
+
 
 /* END OF PARSERS AND SERIALIZERS */
 
@@ -191,11 +207,14 @@ MultiWii.prototype.serialize = function(data) {
 		console.log("Serializer for id: "+id+" not implemented!");
 		return [];
 	}
-	var len = this[_f](dv);
+	var len = this[_f](dv,data);
 
-	var arr = [len,id];
-	for (var i=0;i<len;i++)
-		arr[i+1] = ret[i]; 
+	dv.setUint8(0,len);
+	dv.setUint8(1,id);
+
+	var arr = [];
+	for (var i=0;i<len+2;i++)
+		arr[i] = ret[i]; 
 	return arr;
 };
 

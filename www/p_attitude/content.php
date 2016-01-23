@@ -2,9 +2,6 @@
 <p>Current time: <span id="current_time"/></p>
 <p>Last updated: <span id="update_time"/></p>
 <hr/>
-<p class="lead">
-	ATTITUDE
-</p>
 <p class="llabel">angx (units): <span class="value" id="angx"/></p>
 <p class="llabel">angy (units): <span class="value" id="angy"/></p>
 <p class="llabel">heading: <span class="value" id="heading"/></p>

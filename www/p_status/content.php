@@ -1,5 +1,4 @@
 <div class="starter-template">
-<p>Current time: <span id="current_time"/></p>
 <p>Last updated: <span id="update_time"/></p>
 <hr/>
 <p class="lead">
@@ -18,6 +17,8 @@
 <p class="llabel">sensor: <span class="value" id="sensor"/></p>
 <p class="llabel">flag: <span class="value" id="flag"/></p>
 <p class="llabel">currentSet: <span class="value" id="currentSet"/></p>
+
+<button id="reset_conf" type="button" class="btn btn-info">Reset all</button>
 </div>
 
 
@@ -34,6 +35,20 @@ function on_ready() {
         ws.open("ws://"+proxy_ip+":"+proxy_port);
 
     mw = new MultiWii();
+
+    $("#reset_conf").click(
+    	function() { reset_all(); } 
+    );
+}
+
+function reset_all() {
+	var msg;
+
+	msg = mw.serialize({
+		"id": 208
+	});
+	ws.send(msg);
+	
 }
 
 function start() {
@@ -53,7 +68,6 @@ function start() {
 
 function update() {
 	var msg;
-	$("#current_time").text(get_time()); 
 
 	msg = mw.serialize({
 		"id": 101

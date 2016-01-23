@@ -3,21 +3,13 @@
 <p>Last updated: <span id="update_time"/></p>
 <hr/>
 <p class="lead">
-	IDENT
+	ATTITUDE
 </p>
-<p class="llabel">Version: <span class="value" id="version"/></p>
-<p class="llabel">Multitype: <span class="value" id="multitype"/></p>
-<p class="llabel">MSP_Version: <span class="value" id="msp_version"/></p>
-<p class="llabel">Capability: <span class="value" id="capability"/></p>
-<hr/>
-<p class="lead">
-	STATUS
-</p>
-<p class="llabel">cycleTime (micros): <span class="value" id="cycleTime"/></p>
-<p class="llabel">i2c_errors_count: <span class="value" id="i2c_errors_count"/></p>
-<p class="llabel">sensor: <span class="value" id="sensor"/></p>
-<p class="llabel">flag: <span class="value" id="flag"/></p>
-<p class="llabel">currentSet: <span class="value" id="currentSet"/></p>
+<p class="llabel">angx (units): <span class="value" id="angx"/></p>
+<p class="llabel">angy (units): <span class="value" id="angy"/></p>
+<p class="llabel">heading: <span class="value" id="heading"/></p>
+<button id="calibrate_acc" type="button" class="btn btn-info">Calibrate Acc</button>
+<button id="calibrate_mag" type="button" class="btn btn-info">Calibrate Mag</button>
 </div>
 
 
@@ -34,24 +26,27 @@ function on_ready() {
         ws.open("ws://"+proxy_ip+":"+proxy_port);
 
     mw = new MultiWii();
+
+    $("#calibrate_acc").click(
+    	function() { calibrate_acc(); } 
+    );
+    $("#calibrate_mag").click(
+    	function() { calibrate_mag(); } 
+    );
 }
 
 function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([100,101]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([108]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
-	msg = mw.serialize({ //prepere a request message
-		"id": 100
-	});
-	ws.send(msg); //send it
-
-	setInterval(update,1000); //keep sending the requests every second
+	setInterval(update,200); //keep sending the requests every 100ms
 }
 
 function websock_err() {
+	console.log(arguments); 
 	$("#danger").text("Websocket error! Check the mw proxy is running on "+proxy_ip+":"+proxy_port+" and it is accessible.");
 	$('#danger').show();
 	setTimeout(function(){$('#danger').hide();},10000);	
@@ -62,25 +57,43 @@ function update() {
 	$("#current_time").text(get_time()); 
 
 	msg = mw.serialize({
-		"id": 101
+		"id": 108
 	});
 	ws.send(msg);
 	
 }
 
-function msg_ident(data) {
-	$("#version").text(data.version); 
-	$("#msp_version").text(data.msp_version); 
-	$("#capability").text(JSON.stringify(data.capability)); 
-	$("#multitype").text(MultiWii.MultiType[data.multitype]); 
+function calibrate_acc() {
+	var msg;
+	$("#current_time").text(get_time()); 
+
+	msg = mw.serialize({
+		"id": 205
+	});
+	ws.send(msg);
+
+	$("#info").text("Wait a few secounds. Do not move your copter during this.");
+	$('#info').show();
+	setTimeout(function(){$('#info').hide();},10000);	
 }
 
-function msg_status(data) {
-	$("#cycleTime").text(data.cycleTime); 
-	$("#i2c_errors_count").text(data.i2c_errors_count); 
-	$("#sensor").text(JSON.stringify(data.sensor)); 
-	$("#flag").text(data.flag); 
-	$("#currentSet").text(data["global_conf.currentSet"]); 
+function calibrate_mag() {
+	var msg;
+	$("#current_time").text(get_time()); 
+
+	msg = mw.serialize({
+		"id": 206
+	});
+	ws.send(msg);
+	$("#info").text("Rotate Copter on all 3 axes for 30 seconds");
+	$('#info').show();
+	setTimeout(function(){$('#info').hide();},30000);
+}
+
+function msg_attitude(data) {
+	$("#angx").text(data.angx); 
+	$("#angy").text(data.angy); 
+	$("#heading").text(data.heading); 
 }
 
 function websock_recv() { //we have received a message
@@ -91,8 +104,7 @@ function websock_recv() { //we have received a message
 			//console.log("Received: ",data);
 			///populate screen with data
 			switch (data.id) {
-				case 100: msg_ident(data); break;
-				case 101: msg_status(data); break;
+				case 108: msg_attitude(data); break;
 			}
 		} else {
 			//console.log(data);

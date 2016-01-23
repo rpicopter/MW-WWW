@@ -56,18 +56,37 @@ MultiWii.prototype.parse_id101 = function(dv) {
 		'flag': parseInt(dv.getUint32(8,endiness)).toString(2), //get binary format for the value
 		'global_conf.currentSet': dv.getUint8(12,endiness)
 	}
-
-
-	//BARO<<1|MAG<<2|GPS<<3|SONAR<<4
 	return ret;
 };
 
+MultiWii.prototype.serialize_id108 = function(dv) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id108 = function(dv) { 
+	var ret = {
+		'angx': dv.getInt16(2,endiness),
+		'angy': dv.getInt16(4,endiness),
+		'heading': dv.getInt16(6,endiness)
+	}
+	return ret;
+};
+
+MultiWii.prototype.serialize_id205 = function(dv) {
+	return 0;
+};
+
+MultiWii.prototype.serialize_id206 = function(dv) {
+	return 0;
+};
 
 /* END OF PARSERS AND SERIALIZERS */
 
 MultiWii.MultiType = ["?","TRI","QUADP","QUADX","BI","GIMBAL","Y6","HEX6","FLYING_WING","Y4","HEX6X","OCTOX8","OCTOFLATP","OCTOFLATX","AIRPLANE","HELI_120","HELI_90","VTAIL4","HEX6H","SINGLECOPTER","DUALCOPTER"];
 
 MultiWii.getBit = function(val,bit) {
+	//TODO: handle endiness correctly - check the endiness; use bitwise operations to get the correct bit
+	//Would be nice to have a browser with different endiness for testing purposes
 	var v = parseInt(val).toString(2);
 	if (v[bit]==undefined) return 0;
 	return v[bit];

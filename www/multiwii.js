@@ -18,13 +18,24 @@ MultiWii.prototype.serialize_id100 = function(dv) {
 };
 
 MultiWii.prototype.parse_id100 = function(dv) { 
-	return {
+	var caps = dv.getUint32(5,endiness);
+	var ret = {
 		//the actual data starts from 2nd byte
 		'version': dv.getUint8(2,endiness),
 		'multitype': dv.getUint8(3,endiness),
 		'msp_version': dv.getUint8(4,endiness),
-		'capability': dv.getUint32(5,endiness)
+		//'capability': dv.getUint32(5,endiness),
+		'capability': {
+			'bind_capable': MultiWii.getBit(caps,0),
+			'dynbal': MultiWii.getBit(caps,1),
+			'flap': MultiWii.getBit(caps,2),
+			'navcap': MultiWii.getBit(caps,3),
+			'extaux': MultiWii.getBit(caps,4),
+			'navi_version': 0
+		}
 	}
+
+	return ret;
 };
 
 MultiWii.prototype.serialize_id101 = function(dv) {
@@ -32,16 +43,35 @@ MultiWii.prototype.serialize_id101 = function(dv) {
 };
 
 MultiWii.prototype.parse_id101 = function(dv) { 
-	return {
+	var sensor = dv.getUint16(6,endiness);
+	var ret = {
 		'cycleTime': dv.getUint16(2,endiness),
 		'i2c_errors_count': dv.getUint16(4,endiness),
-		'sensor': dv.getUint16(6,endiness),
-		'flag': dv.getUint32(8,endiness),
+		'sensor': {
+			'baro': MultiWii.getBit(sensor,0),
+			'iag': MultiWii.getBit(sensor,1),
+			'gps': MultiWii.getBit(sensor,2),
+			'sonar': MultiWii.getBit(sensor,3)
+		},
+		'flag': parseInt(dv.getUint32(8,endiness)).toString(2), //get binary format for the value
 		'global_conf.currentSet': dv.getUint8(12,endiness)
 	}
+
+
+	//BARO<<1|MAG<<2|GPS<<3|SONAR<<4
+	return ret;
 };
 
 
+/* END OF PARSERS AND SERIALIZERS */
+
+MultiWii.MultiType = ["?","TRI","QUADP","QUADX","BI","GIMBAL","Y6","HEX6","FLYING_WING","Y4","HEX6X","OCTOX8","OCTOFLATP","OCTOFLATX","AIRPLANE","HELI_120","HELI_90","VTAIL4","HEX6H","SINGLECOPTER","DUALCOPTER"];
+
+MultiWii.getBit = function(val,bit) {
+	var v = parseInt(val).toString(2);
+	if (v[bit]==undefined) return 0;
+	return v[bit];
+}
 
 MultiWii.prototype.filters = function(data) {
 	var arr = [];

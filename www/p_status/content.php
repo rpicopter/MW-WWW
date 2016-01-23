@@ -5,19 +5,19 @@
 <p class="lead">
 	IDENT
 </p>
-<p class="llabel">Version:<span class="value" id="version"/></p>
-<p class="llabel">Multitype:<span class="value" id="multitype"/></p>
-<p class="llabel">MSP_Version:<span class="value" id="msp_version"/></p>
-<p class="llabel">Capability:<span class="value" id="capability"/></p>
+<p class="llabel">Version: <span class="value" id="version"/></p>
+<p class="llabel">Multitype: <span class="value" id="multitype"/></p>
+<p class="llabel">MSP_Version: <span class="value" id="msp_version"/></p>
+<p class="llabel">Capability: <span class="value" id="capability"/></p>
 <hr/>
 <p class="lead">
 	STATUS
 </p>
-<p class="llabel">cycleTime:<span class="value" id="cycleTime"/></p>
-<p class="llabel">i2c_errors_count:<span class="value" id="i2c_errors_count"/></p>
-<p class="llabel">sensor:<span class="value" id="sensor"/></p>
-<p class="llabel">flag:<span class="value" id="flag"/></p>
-<p class="llabel">currentSet:<span class="value" id="currentSet"/></p>
+<p class="llabel">cycleTime (micros): <span class="value" id="cycleTime"/></p>
+<p class="llabel">i2c_errors_count: <span class="value" id="i2c_errors_count"/></p>
+<p class="llabel">sensor: <span class="value" id="sensor"/></p>
+<p class="llabel">flag: <span class="value" id="flag"/></p>
+<p class="llabel">currentSet: <span class="value" id="currentSet"/></p>
 </div>
 
 
@@ -38,7 +38,7 @@ function on_ready() {
 }
 
 function start() {
-	console.log("Connected to mw proxy");
+	//console.log("Connected to mw proxy");
 	var msg;
 
 	msg = mw.filters([100,101]); //filters need to be sent as the first message on a new connection to mw proxy
@@ -52,9 +52,7 @@ function start() {
 	setInterval(update,1000); //keep sending the requests every second
 }
 
-function websock_err() {
-	console.log("Error: ",arguments);
-}
+function websock_err() { console.log(arguments); }
 
 function update() {
 	var msg;
@@ -67,15 +65,34 @@ function update() {
 	
 }
 
+function msg_ident(data) {
+	$("#version").text(data.version); 
+	$("#msp_version").text(data.msp_version); 
+	$("#capability").text(JSON.stringify(data.capability)); 
+	$("#multitype").text(MultiWii.MultiType[data.multitype]); 
+}
+
+function msg_status(data) {
+	$("#cycleTime").text(data.cycleTime); 
+	$("#i2c_errors_count").text(data.i2c_errors_count); 
+	$("#sensor").text(JSON.stringify(data.sensor)); 
+	$("#flag").text(data.flag); 
+	$("#currentSet").text(data["global_conf.currentSet"]); 
+}
+
 function websock_recv() { //we have received a message
 	var data;
 	do { //receive messages in a loop to ensure we got all of them
 		data = mw_recv();
 		if (data.err == undefined) { //if err is set it means there was a genuine error or we haven't received enough data to proceed yet
-			console.log("Received: ",data);
-			///TODO: populate screen with data
+			//console.log("Received: ",data);
+			///populate screen with data
+			switch (data.id) {
+				case 100: msg_ident(data); break;
+				case 101: msg_status(data); break;
+			}
 		} else {
-			//console.log(data.err);
+			//console.log(data);
 		}
 
 	} while (data.err == undefined); 

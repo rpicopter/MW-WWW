@@ -66,7 +66,8 @@ foreach ($pages as $key => $value) {
 <?php
 include('p_'.$current_page.'/content.php');
 ?>
-
+<div id="info" class="alert alert-info" style="display: none;"></div>
+<div id="danger" class="alert alert-danger" style="display: none;"></div>
 </div>
 
 
@@ -83,6 +84,8 @@ include('p_'.$current_page.'/content.php');
 <script src="multiwii.js"></script>
 
 <script type="text/javascript">
+    var proxy_ip = '<?php echo $host; ?>';
+    var proxy_port = 8888;
 	$(document).ready(function() {
 		if (on_ready !== undefined) on_ready();
 	});

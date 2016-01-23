@@ -24,3 +24,10 @@ function mw_recv() { //helper function to receive and parse data from websocket
 
     return mw.parse(data);
 }
+
+function default_err() {
+  console.log(arguments); 
+  $("#danger").text("Websocket error! Check the mw proxy is running on "+proxy_ip+":"+proxy_port+" and it is accessible.");
+  $('#danger').show();
+  setTimeout(function(){$('#danger').hide();},10000); 
+}

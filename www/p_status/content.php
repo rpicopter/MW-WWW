@@ -28,11 +28,10 @@
 /* It will also install handlers (on) to tell us when the connection is established, message arrives etc */
 function on_ready() {
 	ws = new Websock();
-        var lip = '<?php echo $host; ?>';
-        ws.on('error',websock_err);
+        ws.on('error',default_err);
 		ws.on('message',websock_recv);
 		ws.on('open',start);
-        ws.open("ws://"+lip+":8888");
+        ws.open("ws://"+proxy_ip+":"+proxy_port);
 
     mw = new MultiWii();
 }
@@ -51,8 +50,6 @@ function start() {
 
 	setInterval(update,1000); //keep sending the requests every second
 }
-
-function websock_err() { console.log(arguments); }
 
 function update() {
 	var msg;

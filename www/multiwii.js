@@ -2,6 +2,7 @@
 
 function MultiWii() {
 	MAX_MSG_LEN = 32;
+	endiness = true; //used when reading and writing from DataView
 }
 
 
@@ -19,10 +20,10 @@ MultiWii.prototype.serialize_id100 = function(dv) {
 MultiWii.prototype.parse_id100 = function(dv) { 
 	return {
 		//the actual data starts from 2nd byte
-		'version': dv.getUint8(2),
-		'multitype': dv.getUint8(3),
-		'msp_version': dv.getUint8(4),
-		'capability': dv.getUint32(5)
+		'version': dv.getUint8(2,endiness),
+		'multitype': dv.getUint8(3,endiness),
+		'msp_version': dv.getUint8(4,endiness),
+		'capability': dv.getUint32(5,endiness)
 	}
 };
 
@@ -32,11 +33,11 @@ MultiWii.prototype.serialize_id101 = function(dv) {
 
 MultiWii.prototype.parse_id101 = function(dv) { 
 	return {
-		'cycleTime': dv.getUint16(2),
-		'i2c_errors_count': dv.getUint16(4),
-		'sensor': dv.getUint16(6),
-		'flag': dv.getUint32(8),
-		'global_conf.currentSet': dv.getUint8(12)
+		'cycleTime': dv.getUint16(2,endiness),
+		'i2c_errors_count': dv.getUint16(4,endiness),
+		'sensor': dv.getUint16(6,endiness),
+		'flag': dv.getUint32(8,endiness),
+		'global_conf.currentSet': dv.getUint8(12,endiness)
 	}
 };
 

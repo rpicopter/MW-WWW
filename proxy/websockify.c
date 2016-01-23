@@ -191,7 +191,7 @@ void do_proxy(ws_ctx_t *ws_ctx) {
     pdbg("Starting proxy loop\n");
     while (!stop) {
         tv.tv_sec = 0;
-        tv.tv_usec = 2500000; //every 50ms
+        tv.tv_usec = 50000; //every 50ms
 
         FD_ZERO(&rlist);
         FD_ZERO(&wlist);

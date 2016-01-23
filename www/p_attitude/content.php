@@ -43,6 +43,7 @@ function start() {
 	ws.send( msg );
 
 	setInterval(update,200); //keep sending the requests every 200ms
+
 }
 
 function update() {

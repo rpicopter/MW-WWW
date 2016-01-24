@@ -62,10 +62,11 @@ MultiWii.prototype.parse_id101 = function(dv) {
 		'cycleTime': dv.getUint16(2,endiness),
 		'i2c_errors_count': dv.getUint16(4,endiness),
 		'sensor': {
-			'baro': MultiWii.getBit(sensor,0),
-			'iag': MultiWii.getBit(sensor,1),
-			'gps': MultiWii.getBit(sensor,2),
-			'sonar': MultiWii.getBit(sensor,3)
+			'acc': MultiWii.getBit(sensor,0),
+			'baro': MultiWii.getBit(sensor,1),
+			'mag': MultiWii.getBit(sensor,2),
+			'gps': MultiWii.getBit(sensor,3),
+			'sonar': MultiWii.getBit(sensor,4)
 		},
 		'flag': parseInt(dv.getUint32(8,endiness)).toString(2), //get binary format for the value
 		'global_conf.currentSet': dv.getUint8(12,endiness)
@@ -101,6 +102,19 @@ MultiWii.prototype.parse_id112 = function(dv) {
 		}
 
 	return ret;
+};
+
+MultiWii.prototype.serialize_id200 = function(dv,data) {
+	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
+	dv.setUint16(2,data["roll"]);
+	dv.setUint16(4,data["pitch"]);
+	dv.setUint16(6,data["yaw"]);
+	dv.setUint16(8,data["throttle"]);
+	dv.setUint16(10,data["aux1"]);
+	dv.setUint16(12,data["aux2"]);
+	dv.setUint16(14,data["aux3"]);
+	dv.setUint16(16,data["aux4"]);
+	return 16;
 };
 
 MultiWii.prototype.serialize_id202 = function(dv,data) {

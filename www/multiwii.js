@@ -74,6 +74,24 @@ MultiWii.prototype.parse_id101 = function(dv) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id105 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id105 = function(dv) { 
+	var ret = {
+		'roll': dv.getUint16(2,endiness),
+		'pitch': dv.getUint16(4,endiness),
+		'yaw': dv.getUint16(6,endiness),
+		'throttle': dv.getUint16(8,endiness),
+		'aux1': dv.getUint16(10,endiness),
+		'aux2': dv.getUint16(12,endiness),
+		'aux3': dv.getUint16(14,endiness),
+		'aux4': dv.getUint16(16,endiness)
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id108 = function(dv,data) {
 	return 0;
 };

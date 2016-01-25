@@ -10,7 +10,9 @@ if(isset($_GET["p"])) $current_page = $_GET["p"];
 $pages = [
         "status" => "Status",
         "attitude" => "Attitude",
-        "pid" => "PID"
+        "pid" => "PID",
+        "rc" => "RC"
+        //"fly" => "Test!"
 ];
 
 
@@ -24,7 +26,7 @@ $pages = [
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 <title>MultiWii</title>
-
+<!-- <script src="fulltilt/fulltilt.js"></script>-->
 <!-- Bootstrap -->
 <link href="bootstrap-3.3.6-dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -76,6 +78,8 @@ include('p_'.$current_page.'/content.php');
 <script src="jquery/jquery-2.2.0.min.js"></script>
 <!-- Include all compiled plugins (below), or include individual files as needed -->
 <script src="bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+
+
 
 <script src="websockify/util.js"></script>
 <script src="websockify/base64.js"></script>

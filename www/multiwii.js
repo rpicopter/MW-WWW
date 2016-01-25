@@ -74,6 +74,24 @@ MultiWii.prototype.parse_id101 = function(dv) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id104 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id104 = function(dv) { 
+	var ret = {
+		'motor1': dv.getUint16(2,endiness),
+		'motor2': dv.getUint16(4,endiness),
+		'motor3': dv.getUint16(6,endiness),
+		'motor4': dv.getUint16(8,endiness),
+		'motor5': dv.getUint16(10,endiness),
+		'motor6': dv.getUint16(12,endiness),
+		'motor7': dv.getUint16(14,endiness),
+		'motor8': dv.getUint16(16,endiness),
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id105 = function(dv,data) {
 	return 0;
 };
@@ -156,6 +174,19 @@ MultiWii.prototype.serialize_id206 = function(dv,data) {
 
 MultiWii.prototype.serialize_id208 = function(dv,data) {
 	return 0;
+};
+
+MultiWii.prototype.serialize_id214 = function(dv,data) {
+	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
+	dv.setUint16(2,data["motor1"]);
+	dv.setUint16(4,data["motor2"]);
+	dv.setUint16(6,data["motor3"]);
+	dv.setUint16(8,data["motor4"]);
+	dv.setUint16(10,data["motor5"]);
+	dv.setUint16(12,data["motor6"]);
+	dv.setUint16(14,data["motor7"]);
+	dv.setUint16(16,data["motor8"]);
+	return 16;
 };
 
 

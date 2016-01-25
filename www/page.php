@@ -12,6 +12,7 @@ $pages = [
         "attitude" => "Attitude",
         "pid" => "PID",
         "motor" => "Motor",
+        "misc" => "Misc",
         "rc" => "RC"
         //"fly" => "Test!"
 ];

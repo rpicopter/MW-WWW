@@ -140,6 +140,28 @@ MultiWii.prototype.parse_id112 = function(dv) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id114 = function(dv) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id114 = function(dv) { 
+	var ret = {
+		'intPowerTrigger1': dv.getUint16(2,endiness),
+		'conf.minthrottle': dv.getUint16(4,endiness),
+		'maxthrottle': dv.getUint16(6,endiness),
+		'mincommand': dv.getUint16(8,endiness),
+		'conf.failsafe_throttle': dv.getUint16(10,endiness),
+		'plog.arm': dv.getUint16(12,endiness),
+		'plog.lifetime': dv.getUint32(14,endiness),
+		'conf.mag_declination': dv.getUint16(18,endiness),
+		'conf.vbatscale': dv.getUint8(20,endiness),
+		'conf.vbatlevel_warn1': dv.getUint8(21,endiness),
+		'conf.vbatlevel_warn2': dv.getUint8(22,endiness),
+		'conf.vbatlevel_crit': dv.getUint8(23,endiness)
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id200 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
 	dv.setUint16(2,data["roll"]);

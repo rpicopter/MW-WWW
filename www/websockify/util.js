@@ -17,7 +17,7 @@ var Util = {};
 /*
  * Make arrays quack
  */
-
+/* //this is in conflict with fulltilt
 Array.prototype.push8 = function (num) {
     this.push(num & 0xFF);
 };
@@ -32,7 +32,7 @@ Array.prototype.push32 = function (num) {
               (num >>  8) & 0xFF,
               (num      ) & 0xFF  );
 };
-
+*/
 // IE does not support map (even in IE9)
 //This prototype is provided by the Mozilla foundation and
 //is distributed under the MIT license.

@@ -11,6 +11,6 @@ for ($i=0;$i<count($ret);$i++) {
 $host = getHostName();
 $host = $ret[1];
 */
-//$host = "94.173.28.134";
+//$host = "127.0.0.1";
 ?>
 

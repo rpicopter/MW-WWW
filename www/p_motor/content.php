@@ -6,49 +6,49 @@
   	<div class="form-group">
     	<p class="col-sm-2">motor1: <span class="value" id="motor1"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor1v">
+      		<input type="number" class="form-control" id="motor1v"/>
     	</div>
   	</div>
   	<div class="form-group">
     	<p class="col-sm-2">motor2: <span class="value" id="motor2"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor2v">
+      		<input type="number" class="form-control" id="motor2v"/>
     	</div>
   	</div>
   	<div class="form-group">
     	<p class="col-sm-2">motor3: <span class="value" id="motor3"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor3v">
+      		<input type="number" class="form-control" id="motor3v"/>
     	</div>
   	</div>
   	<div class="form-group">
     	<p class="col-sm-2">motor4: <span class="value" id="motor4"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor4v">
+      		<input type="number" class="form-control" id="motor4v"/>
     	</div>
   	</div>
   	<div class="form-group">
     	<p class="col-sm-2">motor5: <span class="value" id="motor5"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor5v">
+      		<input type="number" class="form-control" id="motor5v"/>
     	</div>
   	</div>
   	<div class="form-group">
     	<p class="col-sm-2">motor6: <span class="value" id="motor6"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor6v">
+      		<input type="number" class="form-control" id="motor6v"/>
     	</div>
   	</div>
   	<div class="form-group">
     	<p class="col-sm-2">motor7: <span class="value" id="motor7"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor7v">
+      		<input type="number" class="form-control" id="motor7v"/>
     	</div>
   	</div>
   	<div class="form-group">
     	<p class="col-sm-2">motor8: <span class="value" id="motor8"/></p>
     	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor8v">
+      		<input type="number" class="form-control" id="motor8v"/>
     	</div>
   	</div>  	
 </div>   
@@ -104,14 +104,14 @@ function set_motors() {
 
 	msg = mw.serialize({
 		"id": 214,
-		"motor1": $("#motor1v").val(),
-		"motor2": $("#motor2v").val(),
-		"motor3": $("#motor3v").val(),
-		"motor4": $("#motor4v").val(),
-		"motor5": $("#motor5v").val(),
-		"motor6": $("#motor6v").val(),
-		"motor7": $("#motor7v").val(),
-		"motor8": $("#motor8v").val()
+		"motor1": parseInt($("#motor1v").val()),
+		"motor2": parseInt($("#motor2v").val()),
+		"motor3": parseInt($("#motor3v").val()),
+		"motor4": parseInt($("#motor4v").val()),
+		"motor5": parseInt($("#motor5v").val()),
+		"motor6": parseInt($("#motor6v").val()),
+		"motor7": parseInt($("#motor7v").val()),
+		"motor8": parseInt($("#motor8v").val())
 	});
 	ws.send(msg);
 }

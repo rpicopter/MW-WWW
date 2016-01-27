@@ -13,6 +13,7 @@ $pages = [
         "pid" => "PID",
         "motor" => "Motor",
         "misc" => "Misc",
+        "box" => "Box",
         "rc" => "RC"
         //"fly" => "Test!"
 ];

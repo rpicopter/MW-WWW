@@ -5,6 +5,8 @@ function MultiWii() {
 	endiness = true; //defines the endiness of the mw proxy (should not be changed unless the mw proxy implementation changes)
 	client_isLittleEndian = 0; //little-endian by default
 
+	this.BOXNAME = [];
+
 	function isLittleEndian() {
 		var a1 = new Uint32Array([1]);
 		var a2 = new Uint8Array(a1.buffer);
@@ -31,7 +33,7 @@ MultiWii.prototype.serialize_id100 = function(dv,data) {
 	return 0; //length of data
 };
 
-MultiWii.prototype.parse_id100 = function(dv) { 
+MultiWii.prototype.parse_id100 = function(dv,data,len) { 
 	var caps = dv.getUint32(5,endiness);
 	var ret = {
 		//the actual data starts from 2nd byte
@@ -56,7 +58,7 @@ MultiWii.prototype.serialize_id101 = function(dv,data) {
 	return 0;
 };
 
-MultiWii.prototype.parse_id101 = function(dv) { 
+MultiWii.prototype.parse_id101 = function(dv,data,len) { 
 	var sensor = dv.getUint16(6,endiness);
 	var ret = {
 		'cycleTime': dv.getUint16(2,endiness),
@@ -78,7 +80,7 @@ MultiWii.prototype.serialize_id104 = function(dv,data) {
 	return 0;
 };
 
-MultiWii.prototype.parse_id104 = function(dv) { 
+MultiWii.prototype.parse_id104 = function(dv,data,len) { 
 	var ret = {
 		'motor1': dv.getUint16(2,endiness),
 		'motor2': dv.getUint16(4,endiness),
@@ -96,8 +98,9 @@ MultiWii.prototype.serialize_id105 = function(dv,data) {
 	return 0;
 };
 
-MultiWii.prototype.parse_id105 = function(dv) { 
+MultiWii.prototype.parse_id105 = function(dv,data,len) { 
 	var ret = {
+		/*
 		'roll': dv.getUint16(2,endiness),
 		'pitch': dv.getUint16(4,endiness),
 		'yaw': dv.getUint16(6,endiness),
@@ -106,6 +109,15 @@ MultiWii.prototype.parse_id105 = function(dv) {
 		'aux2': dv.getUint16(12,endiness),
 		'aux3': dv.getUint16(14,endiness),
 		'aux4': dv.getUint16(16,endiness)
+		*/
+		'roll': dv.getInt16(2,endiness),
+		'pitch': dv.getInt16(4,endiness),
+		'yaw': dv.getInt16(6,endiness),
+		'throttle': dv.getInt16(8,endiness),
+		'aux1': dv.getInt16(10,endiness),
+		'aux2': dv.getInt16(12,endiness),
+		'aux3': dv.getInt16(14,endiness),
+		'aux4': dv.getInt16(16,endiness)
 	}
 	return ret;
 };
@@ -114,7 +126,7 @@ MultiWii.prototype.serialize_id108 = function(dv,data) {
 	return 0;
 };
 
-MultiWii.prototype.parse_id108 = function(dv) { 
+MultiWii.prototype.parse_id108 = function(dv,data,len) { 
 	var ret = {
 		'angx': dv.getInt16(2,endiness),
 		'angy': dv.getInt16(4,endiness),
@@ -127,7 +139,7 @@ MultiWii.prototype.serialize_id112 = function(dv) {
 	return 0;
 };
 
-MultiWii.prototype.parse_id112 = function(dv) { 
+MultiWii.prototype.parse_id112 = function(dv,data,len) { 
 	ret = {};
 
 	for (var i=0;i<MultiWii.PID.length;i++)
@@ -140,11 +152,26 @@ MultiWii.prototype.parse_id112 = function(dv) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id113 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id113 = function(dv,data,len) { 
+	var ret = {
+		value: []
+	};
+	for (var i=2;i<len;i+=2) {
+		ret.value[ret.value.length] = dv.getUint16(i,endiness);
+	}
+
+	return ret;
+};
+
 MultiWii.prototype.serialize_id114 = function(dv) {
 	return 0;
 };
 
-MultiWii.prototype.parse_id114 = function(dv) { 
+MultiWii.prototype.parse_id114 = function(dv,data,len) { 
 	var ret = {
 		'intPowerTrigger1': dv.getUint16(2,endiness),
 		'conf.minthrottle': dv.getUint16(4,endiness),
@@ -162,8 +189,31 @@ MultiWii.prototype.parse_id114 = function(dv) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id116 = function(dv) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id116 = function(dv,data,len) { 
+	var ret = {};
+	var name = "";
+
+	for (var i=2;i<len;i++) {
+		if (data[i]==59) {//;
+			this.BOXNAME[this.BOXNAME.length] = name;
+			name = "";
+		} else {
+			name += String.fromCharCode(data[i]);
+		}
+	}
+
+	ret.boxname = this.BOXNAME;
+
+	return ret;
+};
+
 MultiWii.prototype.serialize_id200 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
+	/*
 	dv.setUint16(2,data["roll"]);
 	dv.setUint16(4,data["pitch"]);
 	dv.setUint16(6,data["yaw"]);
@@ -172,6 +222,15 @@ MultiWii.prototype.serialize_id200 = function(dv,data) {
 	dv.setUint16(12,data["aux2"]);
 	dv.setUint16(14,data["aux3"]);
 	dv.setUint16(16,data["aux4"]);
+	*/
+	dv.setInt16(2,data["roll"],endiness);
+	dv.setInt16(4,data["pitch"],endiness);
+	dv.setInt16(6,data["yaw"],endiness);
+	dv.setInt16(8,data["throttle"],endiness);
+	dv.setInt16(10,data["aux1"],endiness);
+	dv.setInt16(12,data["aux2"],endiness);
+	dv.setInt16(14,data["aux3"],endiness);
+	dv.setInt16(16,data["aux4"],endiness);
 	return 16;
 };
 
@@ -179,11 +238,19 @@ MultiWii.prototype.serialize_id202 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
 	for (var i=0;i<MultiWii.PID.length;i++) {
 		var pid = data[ MultiWii.PID[i] ];
-		dv.setUint8(2+3*i,pid["p"]);
-		dv.setUint8(2+3*i+1,pid["i"]);
-		dv.setUint8(2+3*i+2,pid["d"]);
+		dv.setUint8(2+3*i,pid["p"],endiness);
+		dv.setUint8(2+3*i+1,pid["i"],endiness);
+		dv.setUint8(2+3*i+2,pid["d"],endiness);
 	}
 	return 3*i;
+};
+
+MultiWii.prototype.serialize_id203 = function(dv,data) {
+	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
+	for (var i=0;i<data.value.length;i++) {
+		dv.setUint16(2+2*i,parseInt(data.value[i]),endiness);
+	}
+	return 2*i;
 };
 
 MultiWii.prototype.serialize_id205 = function(dv,data) {
@@ -200,14 +267,14 @@ MultiWii.prototype.serialize_id208 = function(dv,data) {
 
 MultiWii.prototype.serialize_id214 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
-	dv.setUint16(2,data["motor1"]);
-	dv.setUint16(4,data["motor2"]);
-	dv.setUint16(6,data["motor3"]);
-	dv.setUint16(8,data["motor4"]);
-	dv.setUint16(10,data["motor5"]);
-	dv.setUint16(12,data["motor6"]);
-	dv.setUint16(14,data["motor7"]);
-	dv.setUint16(16,data["motor8"]);
+	dv.setUint16(2,data["motor1"],endiness);
+	dv.setUint16(4,data["motor2"],endiness);
+	dv.setUint16(6,data["motor3"],endiness);
+	dv.setUint16(8,data["motor4"],endiness);
+	dv.setUint16(10,data["motor5"],endiness);
+	dv.setUint16(12,data["motor6"],endiness);
+	dv.setUint16(14,data["motor7"],endiness);
+	dv.setUint16(16,data["motor8"],endiness);
 	return 16;
 };
 
@@ -327,7 +394,7 @@ MultiWii.prototype.parse = function(data) {/*array*/
 		return [];
 	}
 
-	var ret = this[_f](dv);
+	var ret = this[_f](dv,data,data_length);
 	ret.id = id;
 	return ret;
 }

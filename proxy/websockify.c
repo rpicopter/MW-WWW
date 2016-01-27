@@ -191,7 +191,7 @@ void do_proxy(ws_ctx_t *ws_ctx) {
     pdbg("Starting proxy loop\n");
     while (!stop) {
         tv.tv_sec = 0;
-        tv.tv_usec = 50000; //every 50ms
+        tv.tv_usec = 10000; //every 10ms
 
         FD_ZERO(&rlist);
         FD_ZERO(&wlist);
@@ -219,36 +219,6 @@ void do_proxy(ws_ctx_t *ws_ctx) {
             stop = 1;
             break;
         }  
-        // if (ret == 0) {} //select timeout 
-            /*
-        } else if ((ret == 0) && (cout_start==cout_end)) { //select timeout - try reading from target only if we have sent out everything
-            pdbg("Trying to read from target...\n");
-            bytes = 0;
-            //cout_start = 0; //this is done when client write is complete
-            while (shm_scan_incoming(&msg) && bytes<256) { //we got a message //dont retrieve more than 256 bytes at ones (per proxy loop)
-                pdbg("From target: writing into cin_buf+%zd\n",bytes);
-                bytes += ws_msg_serialize(ws_ctx->cin_buf+bytes,&msg);
-            }
-            if (pipe_error) { stop=1; break; }
-            pdbg("From target: encoding %zd bytes from cin_buf into cout_buf\n",bytes);
-            if (ws_ctx->hybi) {
-                cout_end = encode_hybi(ws_ctx->cin_buf, bytes,
-                                ws_ctx->cout_buf, BUFSIZE, 1);
-            } else {
-                cout_end = encode_hixie(ws_ctx->cin_buf, bytes,
-                                ws_ctx->cout_buf, BUFSIZE);
-                }
-            if (bytes < 0) {
-                handler_emsg("encoding error\n");
-                stop = 1;
-                break;
-            } else {
-                pdbg("From target: done; encoded %u bytes.\n",cout_end);
-                traffic("{");                          
-            }         
-            continue;
-        }
-        */
 
         if (FD_ISSET(client, &wlist)) {
             len = cout_end-cout_start;

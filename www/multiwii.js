@@ -76,6 +76,25 @@ MultiWii.prototype.parse_id101 = function(dv,data,len) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id102 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id102 = function(dv,data,len) { 
+	var ret = {
+		'accx': dv.getInt16(2,endiness),
+		'accy': dv.getInt16(4,endiness),
+		'accz': dv.getInt16(6,endiness),
+		'gyrx': dv.getInt16(8,endiness),
+		'gyry': dv.getInt16(10,endiness),
+		'gyrz': dv.getInt16(12,endiness),		
+		'magx': dv.getInt16(14,endiness),
+		'magy': dv.getInt16(16,endiness),
+		'magz': dv.getInt16(18,endiness)
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id104 = function(dv,data) {
 	return 0;
 };
@@ -135,6 +154,18 @@ MultiWii.prototype.parse_id108 = function(dv,data,len) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id109 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id109 = function(dv,data,len) { 
+	var ret = {
+		'EstAlt': dv.getInt32(2,endiness),
+		'vario': dv.getInt16(6,endiness)
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id112 = function(dv) {
 	return 0;
 };
@@ -160,7 +191,7 @@ MultiWii.prototype.parse_id113 = function(dv,data,len) {
 	var ret = {
 		value: []
 	};
-	for (var i=2;i<len;i+=2) {
+	for (var i=2;i<len+2;i+=2) {
 		ret.value[ret.value.length] = dv.getUint16(i,endiness);
 	}
 
@@ -197,7 +228,7 @@ MultiWii.prototype.parse_id116 = function(dv,data,len) {
 	var ret = {};
 	var name = "";
 
-	for (var i=2;i<len;i++) {
+	for (var i=2;i<len+2;i++) {
 		if (data[i]==59) {//;
 			this.BOXNAME[this.BOXNAME.length] = name;
 			name = "";

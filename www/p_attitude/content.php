@@ -2,9 +2,18 @@
 <p>Current time: <span id="current_time"/></p>
 <p>Last updated: <span id="update_time"/></p>
 <hr/>
+	<p class="lead">
+	Attitude	
+	</p>
 <p class="llabel">angx (units): <span class="value" id="angx"/></p>
 <p class="llabel">angy (units): <span class="value" id="angy"/></p>
 <p class="llabel">heading: <span class="value" id="heading"/></p>
+<hr/>
+	<p class="lead">
+	Altitude
+	</p>
+<p class="llabel">Est Alt (cm): <span class="value" id="estalt"/></p>
+<p class="llabel">vario (cm/s): <span class="value" id="vario"/></p>
 <button id="calibrate_acc" type="button" class="btn btn-info">Calibrate Acc</button>
 <button id="calibrate_mag" type="button" class="btn btn-info">Calibrate Mag</button>
 </div>
@@ -30,13 +39,15 @@ function on_ready() {
     $("#calibrate_mag").click(
     	function() { calibrate_mag(); } 
     );
+
+    counter = 0;
 }
 
 function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([108]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([108,109]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
 	setInterval(update,200); //keep sending the requests every 200ms
@@ -47,10 +58,21 @@ function update() {
 	var msg;
 	$("#current_time").text(get_time()); 
 
-	msg = mw.serialize({
-		"id": 108
-	});
+	if (counter==0) {
+		msg = mw.serialize({
+			"id": 108
+		});
+		counter++;
+	} else {
+		msg = mw.serialize({
+			"id": 109
+		});		
+		counter=0;
+	}
+
 	ws.send(msg);
+
+
 	
 }
 
@@ -87,6 +109,12 @@ function msg_attitude(data) {
 	$("#heading").text(data.heading); 
 }
 
+function msg_altitude(data) {
+	$("#estalt").text(data.EstAlt); 
+	$("#vario").text(data.vario); 
+
+}
+
 function websock_recv() { //we have received a message
 	var data;
 	do { //receive messages in a loop to ensure we got all of them
@@ -96,6 +124,7 @@ function websock_recv() { //we have received a message
 			///populate screen with data
 			switch (data.id) {
 				case 108: msg_attitude(data); break;
+				case 109: msg_altitude(data); break;
 			}
 		} else {
 			//console.log(data);

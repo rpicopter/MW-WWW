@@ -27,19 +27,19 @@ for ($i=0;$i<$len;$i++) {
 ?>
 	<p class="lead"><?php echo $l; ?></p>
   	<div class="form-group">
-    	<label for="<?php echo $n."_p" ?>" class="col-sm-2 control-label">P</label>
+    	<label for="<?php echo $n."_p" ?>" class="col-sm-2 control-label">P <span id="<?php echo $n."_pv" ?>"></span></label>
     	<div class="col-sm-10">
       		<input type="number" class="form-control" id="<?php echo $n."_p" ?>" placeholder="<?php echo $l." P" ?>">
     	</div>
   	</div>
   	<div class="form-group">
-    	<label for="<?php echo $n."_i" ?>" class="col-sm-2 control-label">I</label>
+    	<label for="<?php echo $n."_i" ?>" class="col-sm-2 control-label">I <span id="<?php echo $n."_iv" ?>"></span></label>
     	<div class="col-sm-10">
       		<input type="number" class="form-control" id="<?php echo $n."_i" ?>" placeholder="<?php echo $l." I" ?>">
     	</div>
   	</div>
   	<div class="form-group">
-    	<label for="<?php echo $n."_d" ?>" class="col-sm-2 control-label">D</label>
+    	<label for="<?php echo $n."_d" ?>" class="col-sm-2 control-label">D <span id="<?php echo $n."_dv" ?>"></span></label>
     	<div class="col-sm-10">
       		<input type="number" class="form-control" id="<?php echo $n."_d" ?>" placeholder="<?php echo $l." D" ?>">
     	</div> 
@@ -72,6 +72,8 @@ function on_ready() {
     $("#submit_pid").click(
     	function() { save(); } 
     );
+
+    firstMsg = true; 
 }
 
 function start() {
@@ -82,7 +84,7 @@ function start() {
 	ws.send( msg );
 
 	update();
-	//setInterval(update,5000); //keep sending the requests every 5s
+	setInterval(update,2000); //keep sending the requests every 2s
 }
 
 function update() {
@@ -116,10 +118,20 @@ function save() {
 function msg_pid(data) {
 	for (var i=0;i<MultiWii.PID.length;i++) {
 		var pid = data[ MultiWii.PID[i] ];
+		$("#"+MultiWii.PID[i]+"_pv").text(pid.p);
+		$("#"+MultiWii.PID[i]+"_iv").text(pid.i);
+		$("#"+MultiWii.PID[i]+"_dv").text(pid.d);
+	}
+
+	if (firstMsg) {
+	for (var i=0;i<MultiWii.PID.length;i++) {
+		var pid = data[ MultiWii.PID[i] ];
 
 		$("#"+MultiWii.PID[i]+"_p").val(pid.p);
 		$("#"+MultiWii.PID[i]+"_i").val(pid.i);
 		$("#"+MultiWii.PID[i]+"_d").val(pid.d);
+	}
+	firstMsg = false;
 	}
 }
 

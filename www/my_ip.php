@@ -12,5 +12,6 @@ $host = getHostName();
 $host = $ret[1];
 */
 //$host = "127.0.0.1";
+//$host = "192.168.10.20";
 ?>
 

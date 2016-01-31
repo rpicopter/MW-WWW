@@ -249,7 +249,6 @@ default_legend = {
 		} else {
 			e.dataSeries.visible = true;
 		}
-		chart.render();
 	}
 }
 

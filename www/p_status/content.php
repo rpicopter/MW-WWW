@@ -17,8 +17,13 @@
 <p class="llabel">sensor: <span class="value" id="sensor"/></p>
 <p class="llabel">flag: <span class="value" id="flag"/></p>
 <p class="llabel">currentSet: <span class="value" id="currentSet"/></p>
-
 <button id="reset_conf" type="button" class="btn btn-info">Reset all</button>
+<p class="lead">
+	SERVICE STATUS
+</p>
+<p class="llabel">uart_errors_count: <span class="value" id="uart_errors_count"/></p>
+<p class="llabel">uart_tx_count: <span class="value" id="uart_tx_count"/></p>
+<p class="llabel">uart_rx_count: <span class="value" id="uart_rx_count"/></p>
 </div>
 
 
@@ -39,6 +44,8 @@ function on_ready() {
     $("#reset_conf").click(
     	function() { reset_all(); } 
     );
+
+    counter = 0;
 }
 
 function reset_all() {
@@ -55,7 +62,7 @@ function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([100,101]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([50,100,101]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
 	msg = mw.serialize({ //prepere a request message
@@ -63,16 +70,39 @@ function start() {
 	});
 	ws.send(msg); //send it
 
-	setInterval(update,1000); //keep sending the requests every second
+	setInterval(update,500); //keep sending the requests every second
 }
 
 function update() {
 	var msg;
 
-	msg = mw.serialize({
-		"id": 101
-	});
-	ws.send(msg);
+	if (counter==0) {
+		msg = mw.serialize({
+			"id": 101
+		});
+		ws.send(msg);
+	} 
+
+	if (counter==1) {
+		msg = mw.serialize({
+			"id": 50
+		});
+		ws.send(msg);
+	} 
+
+
+	counter++;
+	if (counter==2) counter = 0;
+}
+
+function lmsg_status(data) {
+	var tx_e = data.uart_tx_count;
+	var rx_e = data.uart_rx_count;
+	var crc_e = data.uart_errors_count;
+
+	$("#uart_rx_count").text(rx_e); 
+	$("#uart_tx_count").text(tx_e);  
+	$("#uart_errors_count").text(crc_e + "("+(crc_e/rx_e*100).toFixed(3)+"%)");  
 	
 }
 
@@ -99,6 +129,7 @@ function websock_recv() { //we have received a message
 			//console.log("Received: ",data);
 			///populate screen with data
 			switch (data.id) {
+				case 50: lmsg_status(data); break;
 				case 100: msg_ident(data); break;
 				case 101: msg_status(data); break;
 			}

@@ -10,6 +10,7 @@ if(isset($_GET["p"])) $current_page = $_GET["p"];
 $pages = [
         "status" => "Status",
         "attitude" => "Attitude",
+        "gps" => "GPS",
         "other" => "Other",
         "pid" => "PID",
         "motor" => "Motor",

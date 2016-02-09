@@ -20,8 +20,6 @@ function on_ready() {
         ws.open("ws://"+proxy_ip+":"+proxy_port);
 
     mw = new MultiWii();
-
-    value = [];
     isLoaded = false;
 }
 
@@ -29,16 +27,18 @@ function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([113,116]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([113,119]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
 	//request box names
 	msg = mw.serialize({
-		"id": 116
+		"id": 119
 	});
 	ws.send(msg);
 
 	setInterval(update,1000); //keep sending the request
+
+	value = [];
 }
 
 function update() {
@@ -53,37 +53,50 @@ function update() {
 }
 
 function msg_box(data) {
-	for (var i=0;i<mw.BOXNAME.length;i++) {
-		value[i] = data.value[i];
-		$("#"+mw.BOXNAME[i]+"v").text(data.value[i]);
-		
+	for (var i=0;i<data.active.length;i++) {
+		$("#BOX"+i+"v").text(data.active[i]);
+		value[i] = data.active[i];
 	}
 }
 
-function msg_boxnames(data) {
+
+function msg_boxids(data) {
 	if (isLoaded) return;
 	isLoaded=true;
 	var node;
-	for (var i=0;i<data.boxname.length;i++) {
-		node = "<div><p id=\""+data.boxname[i]+"\">"+data.boxname[i]+": <span id=\""+data.boxname[i]+"v\"/>"
-		node += "<button id=\""+data.boxname[i]+"b\" type=\"button\" class=\"btn btn-primary\">Toggle</button></p></div>";
+	for (var i=0;i<data.supported.length;i++) {
+		var j = data.supported[i];
+		node = "<div><p id=\"BOX"+i+"\">"+MultiWii.BOX[j]+": <span id=\"BOX"+i+"v\"/>"
+		node += "<button id=\"BOX"+i+"b\" type=\"button\" class=\"btn btn-primary\">Toggle</button></p></div>";
 		$("#items").append(node);
-		$("#"+data.boxname[i]+"b").val(i);
-		$("#"+data.boxname[i]+"b").value = i;
-		$("#"+data.boxname[i]+"b").click( function() { toggle(arguments); } );
+		$("#BOX"+i+"b").val(i);
+		$("#BOX"+i+"b").click( function() { toggle(arguments); } );
+	}	
+}
+
+function toggleValue(i) {
+	var x = parseInt(value[i]);
+
+	if (i==0) { //arm - special case
+		return (x==0xFFFF?1:0xFFFF);
 	}
+
+	if (x==0) return 0xFFFF;
+	else return 0;
 }
 
 function toggle(b) {
 	var msg;
 	var i = $(b[0].target)[0].value;
-	value[i] = 1-parseInt(value[i]);
+
 	var data = {
 		"id": 203,
-		"value": []
+		"active": []
 	};
-	for (var j=0;j<value.length;j++)
-		data.value[j] = value[j];
+	for (var j=0;j<value.length;j++) {
+		if (j==i) data.active[j] = toggleValue(i);
+		else data.active[j] = value[j];
+	}
 
 	ws.send(mw.serialize(data));
 }
@@ -97,7 +110,7 @@ function websock_recv() { //we have received a message
 			///populate screen with data
 			switch (data.id) {
 				case 113: msg_box(data); break;
-				case 116: msg_boxnames(data); break;
+				case 119: msg_boxids(data); break;
 			}
 		} else {
 			//console.log(data);

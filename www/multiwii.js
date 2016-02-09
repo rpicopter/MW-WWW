@@ -5,8 +5,6 @@ function MultiWii() {
 	endiness = true; //defines the endiness of the mw proxy (should not be changed unless the mw proxy implementation changes)
 	client_isLittleEndian = 0; //little-endian by default
 
-	this.BOXNAME = [];
-
 	function isLittleEndian() {
 		var a1 = new Uint32Array([1]);
 		var a2 = new Uint8Array(a1.buffer);
@@ -27,6 +25,22 @@ function MultiWii() {
 
 /* Note that this is not the actual MSP protocol. 
 /* The messages from JS are sent to mw server through mw proxy. Proxy and server together will convert them into actual MSP compliant format */
+
+
+MultiWii.prototype.serialize_id50 = function(dv,data) {
+	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
+	return 0; //length of data
+};
+
+MultiWii.prototype.parse_id50 = function(dv,data,len) { 
+	var ret = {
+		"uart_errors_count": dv.getUint16(2,endiness),
+		"uart_rx_count": dv.getUint16(4,endiness),
+		"uart_tx_count": dv.getUint16(6,endiness)
+	}
+
+	return ret;
+};
 
 MultiWii.prototype.serialize_id100 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
@@ -119,16 +133,6 @@ MultiWii.prototype.serialize_id105 = function(dv,data) {
 
 MultiWii.prototype.parse_id105 = function(dv,data,len) { 
 	var ret = {
-		/*
-		'roll': dv.getUint16(2,endiness),
-		'pitch': dv.getUint16(4,endiness),
-		'yaw': dv.getUint16(6,endiness),
-		'throttle': dv.getUint16(8,endiness),
-		'aux1': dv.getUint16(10,endiness),
-		'aux2': dv.getUint16(12,endiness),
-		'aux3': dv.getUint16(14,endiness),
-		'aux4': dv.getUint16(16,endiness)
-		*/
 		'roll': dv.getInt16(2,endiness),
 		'pitch': dv.getInt16(4,endiness),
 		'yaw': dv.getInt16(6,endiness),
@@ -137,6 +141,23 @@ MultiWii.prototype.parse_id105 = function(dv,data,len) {
 		'aux2': dv.getInt16(12,endiness),
 		'aux3': dv.getInt16(14,endiness),
 		'aux4': dv.getInt16(16,endiness)
+	}
+	return ret;
+};
+
+MultiWii.prototype.serialize_id106 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id106 = function(dv,data,len) { 
+	var ret = {
+		'gps_fix': dv.getUint8(2,endiness),
+		'gps_numsat': dv.getUint8(3,endiness),
+		'gps_coord_lat': dv.getInt32(4,endiness),
+		'gps_coord_lon': dv.getInt32(8,endiness),
+		'gps_altitude': dv.getUint16(12,endiness),
+		'gps_speed': dv.getUint16(14,endiness),
+		'gps_ground_course': dv.getUint16(16,endiness)
 	}
 	return ret;
 };
@@ -188,13 +209,15 @@ MultiWii.prototype.serialize_id113 = function(dv,data) {
 };
 
 MultiWii.prototype.parse_id113 = function(dv,data,len) { 
-	var ret = {
-		value: []
-	};
+	var s = [];
+
 	for (var i=2;i<len+2;i+=2) {
-		ret.value[ret.value.length] = dv.getUint16(i,endiness);
+		s[s.length] = dv.getUint16(i,endiness);
 	}
 
+	var ret = {
+		"active": s
+	};
 	return ret;
 };
 
@@ -226,20 +249,39 @@ MultiWii.prototype.serialize_id116 = function(dv) {
 
 MultiWii.prototype.parse_id116 = function(dv,data,len) { 
 	var ret = {};
+	var s =[];
 	var name = "";
 
 	for (var i=2;i<len+2;i++) {
 		if (data[i]==59) {//;
-			this.BOXNAME[this.BOXNAME.length] = name;
+			s[s.length] = name;
 			name = "";
 		} else {
 			name += String.fromCharCode(data[i]);
 		}
 	}
 
-	ret.boxname = this.BOXNAME;
+	ret.boxname = s;
 
 	return ret;
+};
+
+MultiWii.prototype.serialize_id119 = function(dv) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id119 = function(dv,data,len) { 
+ var s = [];
+
+ for (var i=2;i<len;i++) {
+ 	s[s.length] = dv.getUint8(i,endiness);
+ }
+
+ var ret = {
+ 	"supported": s
+ }
+
+ return ret;
 };
 
 MultiWii.prototype.serialize_id200 = function(dv,data) {
@@ -278,8 +320,8 @@ MultiWii.prototype.serialize_id202 = function(dv,data) {
 
 MultiWii.prototype.serialize_id203 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
-	for (var i=0;i<data.value.length;i++) {
-		dv.setUint16(2+2*i,parseInt(data.value[i]),endiness);
+	for (var i=0;i<data.active.length;i++) {
+		dv.setUint16(2+2*i,parseInt(data.active[i]),endiness);
 	}
 	return 2*i;
 };
@@ -363,6 +405,32 @@ MultiWii.PID = [
   "PIDVEL"
 ];
 
+MultiWii.BOX = [
+  "BOXARM", //0
+  "BOXANGLE", //1
+  "BOXHORIZON", //2
+  "BOXBARO", //3
+  "BOXVARIO", //4
+  "BOXMAG", //5
+  "BOXHEADFREE", //6
+  "BOXHEADADJ", // 7 acquire heading for HEADFREE mode
+  "BOXCAMSTAB",// 8
+  "BOXCAMTRIG", //9
+  "BOXGPSHOME", //10
+  "BOXGPSHOLD", //11
+  "BOXPASSTHRU", //12
+  "BOXBEEPERON", //13
+  "BOXLEDMAX", //14 we want maximum illumination
+  "BOXLEDLOW", //15 low/no lights
+  "BOXLLIGHTS", //16 enable landing lights at any altitude
+  "BOXCALIB", //17
+  "BOXGOV", //18
+  "BOXOSD", //19
+  "BOXGPSNAV", //20
+  "BOXLAND" //21
+  //22
+];
+
 MultiWii.getBit = function(val,bit) {
 	//TODO: handle endiness correctly - check the endiness; use bitwise operations to get the correct bit
 	//Would be nice to have a browser with different endiness for testing purposes
@@ -425,7 +493,7 @@ MultiWii.prototype.parse = function(data) {/*array*/
 		return [];
 	}
 
-	var ret = this[_f](dv,data,data_length);
+	var ret = this[_f](dv,data,data_length); //dv- view on the packet (len,id,data), data- the packet array itself, data_length- data length
 	ret.id = id;
 	return ret;
 }

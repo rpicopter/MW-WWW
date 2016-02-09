@@ -5,32 +5,30 @@
 	CHARTS
 </p>
 		<p class="llabel">Update rate: <span class="value" id="rate"/></p>
-		<div style="height: 400px;" id="chart_a">
-			ACCEL CHART
+		<hr>
+		<div style="display: hidden;" id="accel">
+			<div style="height: 400px;" id="chart_a"></div>
+			<p class="llabel">accx: <span class="value" id="accx"/></p>
+			<p class="llabel">accy: <span class="value" id="accy"/></p>
+			<p class="llabel">accz: <span class="value" id="accz"/></p>					
 		</div>
-		<div style="height: 400px;" id="chart_g">
-			GYRO CHART
+		
+		<div style="display: hidden;" id="gyro">
+			<div style="height: 400px;" id="chart_g"></div>
+			<p class="llabel">gyrx: <span class="value" id="gyrx"/></p>
+			<p class="llabel">gyry: <span class="value" id="gyry"/></p>
+			<p class="llabel">gyrz: <span class="value" id="gyrz"/></p>			
 		</div>
-		<div style="height: 400px;" id="chart_m">
-			MAG CHART
-		</div>		
-<p class="lead">
-	RAW IMU
-</p>		
-		<p class="llabel">accx: <span class="value" id="accx"/></p>
-		<p class="llabel">accy: <span class="value" id="accy"/></p>
-		<p class="llabel">accz: <span class="value" id="accz"/></p>
-		<p class="llabel">gyrx: <span class="value" id="gyrx"/></p>
-		<p class="llabel">gyry: <span class="value" id="gyry"/></p>
-		<p class="llabel">gyrz: <span class="value" id="gyrz"/></p>
-		<p class="llabel">magx: <span class="value" id="magx"/></p>
-		<p class="llabel">magy: <span class="value" id="magy"/></p>
-		<p class="llabel">magz: <span class="value" id="magz"/></p>
-		<hr/>
+
+		<div style="display: hidden;" id="mag">
+			<div style="height: 400px;" id="chart_m"></div>		
+			<p class="llabel">magx: <span class="value" id="magx"/></p>
+			<p class="llabel">magy: <span class="value" id="magy"/></p>
+			<p class="llabel">magz: <span class="value" id="magz"/></p>
+		</div>
+	
+<hr/>
 </div>
-
-
-
 
 <script type="text/javascript">
 /* Page functions */
@@ -45,30 +43,58 @@ function on_ready() {
 
     mw = new MultiWii();
 
-    counter=0;  
+    counter=0;
+
+    sensor = null;
+
+	dataLength = 500;
+	xVal = 0;
+	dps_g = [[],[],[]];
+	dps_m = [[],[],[]]; 
+	dps_a = [[],[],[]];    
 }
 
 
 function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
+	initialized = 0;
 
-	msg = mw.filters([102]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([101,102]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
-	
 
-	dataLength = 500;
-	xVal = 0;
-	dps_a = [[],[],[]]; 
-	dps_g = [[],[],[]]; 
-	dps_m = [[],[],[]];  
-	chart_accel();
+	function req_status() {
+		var msg = mw.serialize({"id": 101}); //request status to find out which charts we need
+		ws.send(msg);
+	}
+
+	req_status();
+	ts = setInterval(req_status,1000);
+}
+
+function init_with_status(data) {
+	if (initialized) return;
+	initialized = 1;
+
+	clearInterval(ts);
+
+	sensor = data.sensor;
+
+	$("#gyro").show();
+	  //we always have gyroscope
 	chart_gyro();
-	chart_mag();
+
+	if (data.sensor.acc) {
+		$("#accel").show();
+		chart_accel();
+	}
+	if (data.sensor.mag) {
+		$("#mag").show();
+		chart_mag();
+	}
 
 	setInterval(update,50); //keep sending the requests every 200ms
 	setInterval(update_rate,1000); //keep sending the requests every 200ms
-
 }
 
 function update_rate() {
@@ -77,6 +103,7 @@ function update_rate() {
 }
 
 function update() {
+
 	var msg;
 
 	msg = mw.serialize({
@@ -84,19 +111,18 @@ function update() {
 	});
 	
 	ws.send(msg);
-	chart_a.render();
+
 	chart_g.render();
-	chart_m.render();
+	if (sensor.acc) chart_a.render();
+	if (sensor.mag) chart_m.render();
 }
 
 function chart_add(data) {
-	if (xVal==0)
-		accz_0 = 0;
-	xVal++;
-
+	//if (xVal==0) accz0 = data.accz;
+	accz0 = 0;
 	dps_a[0].push({'x':xVal, 'y':data.accx});
 	dps_a[1].push({'x':xVal, 'y':data.accy});
-	dps_a[2].push({'x':xVal, 'y':data.accz-accz_0});
+	dps_a[2].push({'x':xVal, 'y':data.accz-accz0});
 
 	dps_g[0].push({'x':xVal, 'y':data.gyrx});
 	dps_g[1].push({'x':xVal, 'y':data.gyry});
@@ -119,6 +145,8 @@ function chart_add(data) {
 		dps_m[1].shift();
 		dps_m[2].shift();		
 	}
+
+	xVal++;
 	
 }
 
@@ -260,6 +288,7 @@ function websock_recv() { //we have received a message
 			//console.log("Received: ",data);
 			///populate screen with data
 			switch (data.id) {
+				case 101: init_with_status(data); break;
 				case 102: msg_raw_imu(data); break;
 			}
 		} else {

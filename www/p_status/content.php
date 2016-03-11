@@ -1,5 +1,7 @@
 <div class="starter-template">
 <p>Last updated: <span id="update_time"/></p>
+<button id="reset_conf" type="button" class="btn btn-info">Reset params</button>
+<button id="reset_mw" type="button" class="btn btn-info">Reset MultiWii</button>
 <hr/>
 <p class="lead">
 	IDENT
@@ -17,8 +19,23 @@
 <p class="llabel">sensor: <span class="value" id="sensor"/></p>
 <p class="llabel">flag: <span class="value" id="flag"/></p>
 <p class="llabel">currentSet: <span class="value" id="currentSet"/></p>
-<button id="reset_conf" type="button" class="btn btn-info">Reset params</button>
-<button id="reset_mw" type="button" class="btn btn-info">Reset MultiWii</button>
+<hr/>
+<p class="lead">
+	MISC
+</p>
+<p class="llabel">intPowerTrigger1: <span class="value" id="intPowerTrigger1"/></p>
+<p class="llabel">conf.minthrottle: <span class="value" id="conf_minthrottle"/></p>
+<p class="llabel">MAXTHROTTLE: <span class="value" id="maxthrottle"/></p>
+<p class="llabel">MINCOMMAND: <span class="value" id="mincommand"/></p>
+<p class="llabel">conf.failsafe_throttle: <span class="value" id="conf_failsafe_throttle"/></p>
+<p class="llabel">plog.arm: <span class="value" id="plog_arm"/></p>
+<p class="llabel">plog.lifetime: <span class="value" id="plog_lifetime"/></p>
+<p class="llabel">conf.mag_declination: <span class="value" id="conf_mag_declination"/></p>
+<p class="llabel">conf.vbatscale: <span class="value" id="conf_vbatscale"/></p>
+<p class="llabel">conf.vbatlevel_warn1: <span class="value" id="conf_vbatlevel_warn1"/></p>
+<p class="llabel">conf.vbatlevel_warn2: <span class="value" id="conf_vbatlevel_warn2"/></p>
+<p class="llabel">conf.vbatlevel_crit: <span class="value" id="conf_vbatlevel_crit"/></p>
+<hr/>
 <p class="lead">
 	SERVICE STATUS
 </p>
@@ -81,7 +98,7 @@ function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([50,100,101]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([50,100,101,114]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
 	msg = mw.serialize({ //prepere a request message
@@ -89,7 +106,7 @@ function start() {
 	});
 	ws.send(msg); //send it
 
-	setInterval(update,500); //keep sending the requests every second
+	setInterval(update,250); //keep sending the requests every second
 }
 
 function update() {
@@ -109,9 +126,15 @@ function update() {
 		ws.send(msg);
 	} 
 
+	if (counter==2) {
+		msg = mw.serialize({
+			"id": 114
+		});
+		ws.send(msg);
+	} 
 
 	counter++;
-	if (counter==2) counter = 0;
+	if (counter==3) counter = 0;
 }
 
 function lmsg_status(data) {
@@ -140,6 +163,21 @@ function msg_status(data) {
 	$("#currentSet").text(data["global_conf.currentSet"]); 
 }
 
+function msg_misc(data) {
+	$("#intPowerTrigger1").text(data.intPowerTrigger1); 
+	$("#conf_minthrottle").text(data["conf.minthrottle"]); 
+	$("#maxthrottle").text(data.maxthrottle); 
+	$("#mincommand").text(data.mincommand); 
+	$("#conf_failsafe_throttle").text(data["conf.failsafe_throttle"]); 
+	$("#plog_arm").text(data["plog.arm"]); 
+	$("#plog_lifetime").text(data["plog.lifetime"]); 
+	$("#conf_mag_declination").text(data["conf.mag_declination"]); 
+	$("#conf_vbatscale").text(data["conf.vbatscale"]); 
+	$("#conf_vbatlevel_warn1").text(data["conf.vbatlevel_warn1"]); 
+	$("#conf_vbatlevel_warn2").text(data["conf.vbatlevel_warn2"]); 
+	$("#conf_vbatlevel_crit").text(data["conf.vbatlevel_crit"]); 
+}
+
 function websock_recv() { //we have received a message
 	var data;
 	do { //receive messages in a loop to ensure we got all of them
@@ -151,6 +189,7 @@ function websock_recv() { //we have received a message
 				case 50: lmsg_status(data); break;
 				case 100: msg_ident(data); break;
 				case 101: msg_status(data); break;
+				case 114: msg_misc(data); break;
 			}
 		} else {
 			//console.log(data);

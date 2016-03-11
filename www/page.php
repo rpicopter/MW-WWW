@@ -14,7 +14,6 @@ $pages = [
         "other" => "Other",
         "pid" => "PID",
         "motor" => "Motor",
-        "misc" => "Misc",
         "box" => "Box",
         "rc" => "RC"
         //"fly" => "Test!"

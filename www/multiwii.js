@@ -442,7 +442,7 @@ MultiWii.getBit = function(val,bit) {
 	//Would be nice to have a browser with different endiness for testing purposes
 	var v = parseInt(val).toString(2);
 	if (v[bit]==undefined) return 0;
-	return v[bit];
+	return parseInt(v[bit]);
 }
 
 MultiWii.prototype.filters = function(data) {

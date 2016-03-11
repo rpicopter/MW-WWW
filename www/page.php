@@ -11,7 +11,7 @@ $pages = [
         "status" => "Status",
         "attitude" => "Attitude",
         "gps" => "GPS",
-        "other" => "Other",
+        "charts" => "Charts",
         "pid" => "PID",
         "motor" => "Motor",
         "box" => "Box",
@@ -58,7 +58,7 @@ foreach ($pages as $key => $value) {
 	if ($current_page == $key)
 		echo '<li class="active"><a href="?p='.$key.'">'.$value.'</a></li>';
 	else
-		echo '<li><a href="?p='.$key.'">'.$value.'</a></li>';
+		echo '<li style="display: none;" id="'.$key.'"><a href="?p='.$key.'">'.$value.'</a></li>';
 }
 ?>
 			</ul>
@@ -94,9 +94,70 @@ include('p_'.$current_page.'/content.php');
 <script type="text/javascript">
     var proxy_ip = '<?php echo $host; ?>';
     var proxy_port = 8888;
+
+
+    //the ready function requests a status from mw, configured the UI to show/hide pages and once finished runs on_ready
 	$(document).ready(function() {
-		if (on_ready !== undefined) on_ready();
+		ws = new Websock();
+        ws.on('error',default_err);
+		ws.on('message',_received);
+		ws.on('open',_connected);
+        ws.open("ws://"+proxy_ip+":"+proxy_port);
+
+    	mw = new MultiWii();
 	});
+
+	function _configure_ui(sensor) {
+		//DEBUG:
+		//sensor = {acc:1,baro:1,mag:1,gps:1,sonar:1};
+
+		if (sensor.acc) $('#attitude').show();
+		//if (sensor.baro)  ...
+		//if (sensor.mag)  ...
+
+		//if (sensor.sonar)  ...
+
+		$('#status').show();
+		$('#charts').show();
+
+		if (sensor.gps) $('#gps').show();
+
+		$('#pid').show();
+		$('#motor').show();
+		$('#box').show();
+		$('#rc').show();
+
+	}
+
+	function _received() {
+		var data;
+		do { //receive messages in a loop to ensure we got all of them
+			data = mw_recv();
+			if (data.err == undefined) { //if err is set it means there was a genuine error or we haven't received enough data to proceed yet
+				if (data.id==101) {
+
+					_configure_ui(data.sensor);
+					ws.close();
+
+					if (on_ready !== undefined) on_ready(); //run the page on_ready now
+				}
+			}
+		} while (data.err == undefined); 		
+	};
+
+	function _connected() {
+		var msg;
+
+		msg = mw.filters([101]); //filters need to be sent as the first message on a new connection to mw proxy
+		ws.send( msg );
+
+		msg = mw.serialize({ //prepere a request message
+			"id": 101
+		});
+		ws.send(msg); //send it
+		
+	}
+
 </script>
 
 </body>

@@ -85,7 +85,7 @@ function calibrate_acc() {
 	});
 	ws.send(msg);
 
-	$("#info").text("Wait a few secounds. Do not move your copter during this.");
+	$("#info").text("Wait a few seconds. Do not move your copter during this.");
 	$('#info').show();
 	setTimeout(function(){$('#info').hide();},10000);	
 }

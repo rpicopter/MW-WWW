@@ -27,6 +27,7 @@ function MultiWii() {
 /* The messages from JS are sent to mw server through mw proxy. Proxy and server together will convert them into actual MSP compliant format */
 
 
+// ======================== CUSTOM FUNCTIONS START
 MultiWii.prototype.serialize_id50 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
 	return 0; //length of data
@@ -41,6 +42,11 @@ MultiWii.prototype.parse_id50 = function(dv,data,len) {
 
 	return ret;
 };
+
+MultiWii.prototype.serialize_id51 = function(dv,data) {
+	return 0; 
+};
+// ======================== CUSTOM FUNCTIONS END
 
 MultiWii.prototype.serialize_id100 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)

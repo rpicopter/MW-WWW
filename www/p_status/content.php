@@ -17,7 +17,8 @@
 <p class="llabel">sensor: <span class="value" id="sensor"/></p>
 <p class="llabel">flag: <span class="value" id="flag"/></p>
 <p class="llabel">currentSet: <span class="value" id="currentSet"/></p>
-<button id="reset_conf" type="button" class="btn btn-info">Reset all</button>
+<button id="reset_conf" type="button" class="btn btn-info">Reset params</button>
+<button id="reset_mw" type="button" class="btn btn-info">Reset MultiWii</button>
 <p class="lead">
 	SERVICE STATUS
 </p>
@@ -45,6 +46,10 @@ function on_ready() {
     	function() { reset_all(); } 
     );
 
+    $("#reset_mw").click(
+    	function() { reset_mw(); } 
+    );
+
     counter = 0;
 }
 
@@ -56,6 +61,20 @@ function reset_all() {
 	});
 	ws.send(msg);
 	
+}
+
+
+function reset_mw() {
+	var msg;
+
+	msg = mw.serialize({
+		"id": 51
+	});
+	ws.send(msg);
+	
+	$("#info").text("Wait a few seconds. If it does not work ensure you have connected your respective host GPIO with reset pin on MW board");
+	$('#info').show();
+	setTimeout(function(){$('#info').hide();},10000);		
 }
 
 function start() {

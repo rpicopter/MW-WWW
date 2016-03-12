@@ -14,6 +14,7 @@
 	</p>
 <p class="llabel">Est Alt (cm): <span class="value" id="estalt"/></p>
 <p class="llabel">vario (cm/s): <span class="value" id="vario"/></p>
+<button id="calibrate_gyro" type="button" class="btn btn-info">Calibrate Gyro</button>
 <button id="calibrate_acc" type="button" class="btn btn-info">Calibrate Acc</button>
 <button id="calibrate_mag" type="button" class="btn btn-info">Calibrate Mag</button>
 </div>
@@ -33,6 +34,9 @@ function on_ready() {
 
     mw = new MultiWii();
 
+    $("#calibrate_gyro").click(
+    	function() { calibrate_gyro(); } 
+    );
     $("#calibrate_acc").click(
     	function() { calibrate_acc(); } 
     );
@@ -71,37 +75,43 @@ function update() {
 	}
 
 	ws.send(msg);
-
-
 	
+}
+
+function calibrate_gyro() {
+	var msg;
+	msg = mw.serialize({
+			"id": 52, "combo": 2
+		});
+	ws.send(msg);
+	$("#info").text("Wait a few seconds while calibrating Gyroscope. Do not move your copter during this.");
+	$('#info').show();
+	setTimeout(function(){$('#info').hide();},10000);
 }
 
 function calibrate_acc() {
 	var msg;
-	$("#current_time").text(get_time()); 
-
 	msg = mw.serialize({
-		"id": 205
-	});
+			"id": 52, "combo": 3
+		});
 	ws.send(msg);
-
-	$("#info").text("Wait a few seconds. Do not move your copter during this.");
+	$("#info").text("Wait a few seconds while calibrating Accelerometer. Do not move your copter during this.");
 	$('#info').show();
-	setTimeout(function(){$('#info').hide();},10000);	
+	setTimeout(function(){$('#info').hide();},10000);		
 }
 
 function calibrate_mag() {
 	var msg;
-	$("#current_time").text(get_time()); 
-
 	msg = mw.serialize({
-		"id": 206
-	});
+			"id": 52, "combo": 4
+		});
 	ws.send(msg);
 	$("#info").text("Rotate Copter on all 3 axes for 30 seconds");
 	$('#info').show();
 	setTimeout(function(){$('#info').hide();},30000);
 }
+
+
 
 function msg_attitude(data) {
 	$("#angx").text(data.angx); 

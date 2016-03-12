@@ -27,6 +27,8 @@ function MultiWii() {
 /* The messages from JS are sent to mw server through mw proxy. Proxy and server together will convert them into actual MSP compliant format */
 
 
+//for serialize - data can be written starting from 3rd byte (0,1 + data), returns number of bytes written
+
 // ======================== CUSTOM FUNCTIONS START
 MultiWii.prototype.serialize_id50 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
@@ -46,6 +48,12 @@ MultiWii.prototype.parse_id50 = function(dv,data,len) {
 MultiWii.prototype.serialize_id51 = function(dv,data) {
 	return 0; 
 };
+
+MultiWii.prototype.serialize_id52 = function(dv,data) {
+	dv.setUint8(2,data["combo"],endiness);
+	return 1; 
+};
+
 // ======================== CUSTOM FUNCTIONS END
 
 MultiWii.prototype.serialize_id100 = function(dv,data) {
@@ -159,8 +167,8 @@ MultiWii.prototype.parse_id106 = function(dv,data,len) {
 	var ret = {
 		'gps_fix': dv.getUint8(2,endiness),
 		'gps_numsat': dv.getUint8(3,endiness),
-		'gps_coord_lat': dv.getInt32(4,endiness),
-		'gps_coord_lon': dv.getInt32(8,endiness),
+		'gps_coord_lat': dv.getInt32(4,endiness)/10000000,
+		'gps_coord_lon': dv.getInt32(8,endiness)/10000000,
 		'gps_altitude': dv.getUint16(12,endiness),
 		'gps_speed': dv.getUint16(14,endiness),
 		'gps_ground_course': dv.getUint16(16,endiness)
@@ -272,7 +280,28 @@ MultiWii.prototype.parse_id116 = function(dv,data,len) {
 	return ret;
 };
 
-MultiWii.prototype.serialize_id119 = function(dv) {
+
+MultiWii.prototype.serialize_id118 = function(dv,data) {
+	dv.setUint8(2,data["wp_no"],endiness);
+	return 1;
+};
+
+MultiWii.prototype.parse_id118 = function(dv,data,len) { 
+	var ret = {
+		'wp_no': dv.getUint8(2,endiness),
+		'action': dv.getUint8(3,endiness),
+		'lat': dv.getInt32(4,endiness)/10000000,
+		'lon': dv.getInt32(8,endiness)/10000000,
+		'AltHold': dv.getUint32(12,endiness),
+		'param1': dv.getInt16(16,endiness),
+		'param2': dv.getInt16(18,endiness),
+		'param3': dv.getInt16(20,endiness),
+		'flag': dv.getUint8(22,endiness)
+	}
+	return ret;
+}
+
+MultiWii.prototype.serialize_id119 = function(dv,data) {
 	return 0;
 };
 
@@ -435,6 +464,14 @@ MultiWii.BOX = [
   "BOXGPSNAV", //20
   "BOXLAND" //21
   //22
+];
+
+MultiWii.STICK = [
+	"STICKARM", //0
+	"STICKDISARM", //1
+	"STICKGYROCALIB", //2
+	"STICKACCCALIB", //3
+	"STICKMAGCALIB" //4
 ];
 
 MultiWii.getBit = function(val,bit) {

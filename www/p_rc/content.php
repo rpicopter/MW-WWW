@@ -24,7 +24,7 @@
     	</div>
   	</div>
   	<div class="form-group">
-    	<p class="col-sm-2">Throttle: <span class="value" id="throttle"/></p>
+    	<p class="col-sm-2">Thr: <span class="value" id="throttle"/></p>
     	<div class="col-sm-10">
       		<input type="number" class="form-control" id="throttlev"/>
     	</div>
@@ -52,12 +52,14 @@
     	<div class="col-sm-10">
       		<input type="number" class="form-control" id="aux4v"/>
     	</div>
-  	</div>  	
-</div>   
+  	</div> 
 
-<button id="set_rc" type="button" class="btn btn-primary">Set</button>
-<button id="arm" type="button" class="btn btn-primary">Arm</button>
-<button id="reset" type="button" class="btn btn-primary">Stop</button>
+</div>   
+<div>
+  <p>Feed RC</p>
+  <input type="checkbox" id="feedrc" value=""/>
+</div>
+
 </div>
 
 
@@ -76,18 +78,19 @@ function on_ready() {
     mw = new MultiWii();
 
     firstMsg = false;
+    feed = 0;
+    value = [];
 
-    value = [1500,1500,1500,1000,1500,1500,1500,1500];
 
-    $("#set_rc").click(
-    	function() { set_rc(); } 
-    );
-    $("#arm").click(
-    	function() { arm(); }
-    ); 
-
-    $("#reset").click(
-    	function() { value = [1500,1500,1500,1000,1500,1500,1500,1500]; }
+    $("#feedrc").click(
+    	function() {
+    		var checked = $('#feedrc:checked').val() != undefined;
+    		if (checked) {
+    			feed = 1;
+    		} else {
+    			feed = 0;
+    		}
+    	} 
     );    
 }
 
@@ -119,8 +122,11 @@ function update() {
 	if (!firstMsg) return;
 	$("#current_time").text(get_time());
 
-
 	requestRC();
+
+	if (feed == 0) return;
+
+	set_rc();
 
 	var data = {
 		"id": 200,
@@ -133,19 +139,13 @@ function update() {
 		"aux3": value[6],
 		"aux4": value[7]
 	};	
-	//console.log(data);
+
 	var msg  = mw.serialize(data);
 
-	if (qw==1) return;
 	ws.send(msg);
 	
 }
 
-function arm() {
-	value = [1500,1500,1900,950,1500,1500,1500,1500];
-
-	setTimeout(function(){ value = [1500,1500,1500,950,1500,1500,1500,1500]; },500);
-}
 
 function set_rc() {
 	value = [

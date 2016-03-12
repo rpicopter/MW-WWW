@@ -78,7 +78,9 @@ function toggleValue(i) {
 	var x = parseInt(value[i]);
 
 	if (i==0) { //arm - special case
-		return (x==0xFFFF?1:0xFFFF);
+		if (x==0xFFFF) return 0;
+		if (x==0) return 1;
+		if (x==1) return 0xFFFF;
 	}
 
 	if (x==0) return 0xFFFF;

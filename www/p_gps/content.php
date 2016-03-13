@@ -165,6 +165,13 @@ function getDistance(p1, p2) {
   return d; // returns the distance in meter
 };
 
+function calculate_home_distance() {
+	if (!location_home || !location_current) return;
+	var distance = getDistance(location_home, location_current);
+	distance = Math.round(distance * 10)/10;
+	$("#home_distance").text(distance);
+}
+
 function msg_gps(data) {
 	set_currentlocation(data["gps_coord_lat"],data["gps_coord_lon"]);
 
@@ -176,9 +183,6 @@ function msg_gps(data) {
 	$("#gps_speed").text(data["gps_speed"]);
 	$("#gps_ground_course").text(data["gps_ground_course"]);
 
-	var distance = getDistance(location_home, location_current);
-	distance = Math.round(distance * 10)/10;
-	$("#home_distance").text(distance);
 }
 
 function msg_comp_gps(data) {

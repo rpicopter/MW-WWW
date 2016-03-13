@@ -176,6 +176,19 @@ MultiWii.prototype.parse_id106 = function(dv,data,len) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id107 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id107 = function(dv,data,len) { 
+	var ret = {
+		'GPS_distanceToHome': dv.getUint16(2,endiness),
+		'GPS_directionToHome': dv.getUint16(4,endiness),
+		'GPS_update': dv.getUint8(6,endiness)
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id108 = function(dv,data) {
 	return 0;
 };
@@ -308,7 +321,7 @@ MultiWii.prototype.serialize_id119 = function(dv,data) {
 MultiWii.prototype.parse_id119 = function(dv,data,len) { 
  var s = [];
 
- for (var i=2;i<len;i++) {
+ for (var i=2;i<len+2;i++) {
  	s[s.length] = dv.getUint8(i,endiness);
  }
 

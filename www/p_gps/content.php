@@ -9,6 +9,8 @@
 <p class="llabel">GPS_altitude (m): <span class="value" id="gps_altitude"/></p>
 <p class="llabel">GPS_speed (m): <span class="value" id="gps_speed"/></p>
 <p class="llabel">GPS_ground_course (deg*10): <span class="value" id="gps_ground_course"/></p>
+<p class="llabel">GPS_distanceToHome: <span class="value" id="GPS_distanceToHome"/></p>
+<p class="llabel">computed home distance (m): <span class="value" id="home_distance"/></p>
 <div id="map-container" style="height: 350px" class="row"></div>
 <div class="row">
 	<button id="get_home" type="button" class="btn btn-info">Check home</button>
@@ -35,6 +37,7 @@ function init_map(lat,lon) {
 }
 
 function on_ready() {
+
 	//google.maps.event.addDomListener(window, 'load', init_map);
 	g_map = null;
 	init_map(0,0);
@@ -53,7 +56,9 @@ function on_ready() {
 
 
   	marker_home = null;
+  	location_home = null;
   	marker_current = null;
+  	location_current = null;
 }
 
 function start() {
@@ -63,7 +68,8 @@ function start() {
 	msg = mw.filters([106,118]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
-	setInterval(update,1000); //keep sending the requests every 1s
+	counter = 0;
+	setInterval(update,500); //keep sending the requests every 1s
 
 	request_wp(0);
 }
@@ -72,9 +78,18 @@ function update() {
 	var msg;
 	$("#current_time").text(get_time()); 
 
+	if (counter==0) {
 		msg = mw.serialize({
 			"id": 106
 		});
+	} else {
+		msg = mw.serialize({
+			"id": 107
+		});
+	}
+
+	counter++;
+	if (counter==2) counter = 0;
 
 	ws.send(msg);
 }
@@ -88,50 +103,70 @@ function request_wp(i) {
 	ws.send(msg);
 }
 
-function set_homelocation(data) {
-	if (data.lat==0 && data.lon==0) {
+function set_homelocation(lat,lon) {
+	if (lat==0 && lon==0) {
 		$("#info").text("Home position unknown. Ensure you have a fix. Calibrate Gyro or arm to reset home position.");
 		$('#info').show();
 		setTimeout(function(){$('#info').hide();},10000);
 		return;
 	}
-	var var_location = new google.maps.LatLng(data.lat,data.lon);
+	location_home = new google.maps.LatLng(lat,lon);
 
 	if (marker_home) {
-		marker_home.setPosition(var_location);
-		g_map.panTo(var_location);
+		marker_home.setPosition(location_home);
+		g_map.panTo(location_home);
 	} else {
 		marker_home = new google.maps.Marker({
-			position: var_location,
+			position: location_home,
 			map: g_map,
 			icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
 			title:"Home"});
  
  		marker_home.setMap(g_map);		
- 		g_map.panTo(var_location);
+ 		g_map.panTo(location_home);
 	}
 }
 
 function msg_wp(data) {
-	if (data.wp_no==0) set_homelocation(data);
+	if (data.wp_no==0) set_homelocation(data.lat,data.lon);
 	else console.log(data);
 }
 
-function msg_gps(data) {
-
-	var var_location = new google.maps.LatLng(data["gps_coord_lat"],data["gps_coord_lon"]);
+function set_currentlocation(lat,lon) {
+	location_current = new google.maps.LatLng(lat,lon);
 
 	if (marker_current) {
-		marker_current.setPosition(var_location);
-		if (!marker_home) g_map.panTo(var_location);
+		marker_current.setPosition(location_current);
+		if (!marker_home) g_map.panTo(location_current);
 	} else {
 		marker_current = new google.maps.Marker({
-			position: var_location,
+			position: location_current,
 			map: g_map,
 			title:"Current"});
  
  		marker_current.setMap(g_map);
  	}
+
+}
+
+function rad(x) {
+  return x * Math.PI / 180;
+};
+
+function getDistance(p1, p2) {
+  var R = 6378137; // Earth’s mean radius in meter
+  var dLat = rad(p2.lat() - p1.lat());
+  var dLong = rad(p2.lng() - p1.lng());
+  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) *
+    Math.sin(dLong / 2) * Math.sin(dLong / 2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  var d = R * c;
+  return d; // returns the distance in meter
+};
+
+function msg_gps(data) {
+	set_currentlocation(data["gps_coord_lat"],data["gps_coord_lon"]);
 
 	$("#gps_fix").text(data["gps_fix"]); 
 	$("#gps_numsat").text(data["gps_numsat"]);
@@ -140,6 +175,15 @@ function msg_gps(data) {
 	$("#gps_altitude").text(data["gps_altitude"]);
 	$("#gps_speed").text(data["gps_speed"]);
 	$("#gps_ground_course").text(data["gps_ground_course"]);
+
+	var distance = getDistance(location_home, location_current);
+	distance = Math.round(distance * 10)/10;
+	$("#home_distance").text(distance);
+}
+
+function msg_comp_gps(data) {
+	//console.log(data);
+	$("#GPS_distanceToHome").text(data["GPS_distanceToHome"]);
 }
 
 function websock_recv() { //we have received a message
@@ -151,6 +195,7 @@ function websock_recv() { //we have received a message
 			///populate screen with data
 			switch (data.id) {
 				case 106: msg_gps(data); break;
+				case 107: msg_comp_gps(data); break;
 				case 118: msg_wp(data); break;
 			}
 		} else {

@@ -54,11 +54,13 @@ function on_ready() {
     	function() { request_wp(0); } 
     );     
 
-
+    homepan = 0;
   	marker_home = null;
   	location_home = null;
   	marker_current = null;
   	location_current = null;
+  	marker_pilot = null;
+  	location_pilot = null;
 }
 
 function start() {
@@ -74,7 +76,33 @@ function start() {
 	request_wp(0);
 }
 
+function update_pilot_location() {
+	if (!navigator || !navigator.geolocation) return;
+
+	navigator.geolocation.getCurrentPosition(set_pilotlocation);
+}
+
+function set_pilotlocation(position) {
+	location_pilot = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
+
+	if (marker_pilot) {
+		marker_pilot.setPosition(location_pilot);
+		if (!homepan) g_map.panTo(location_pilot);
+		homepan = 1;
+	} else {
+		marker_pilot = new google.maps.Marker({
+			position: location_pilot,
+			map: g_map,
+			icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+			title:"Pilot"});
+ 
+ 		marker_pilot.setMap(g_map);
+ 	}
+}
+
 function update() {
+	if (counter==0) update_pilot_location();
+
 	var msg;
 	$("#current_time").text(get_time()); 
 
@@ -115,6 +143,7 @@ function set_homelocation(lat,lon) {
 	if (marker_home) {
 		marker_home.setPosition(location_home);
 		g_map.panTo(location_home);
+		homepan = 1;
 	} else {
 		marker_home = new google.maps.Marker({
 			position: location_home,
@@ -137,7 +166,7 @@ function set_currentlocation(lat,lon) {
 
 	if (marker_current) {
 		marker_current.setPosition(location_current);
-		if (!marker_home) g_map.panTo(location_current);
+		if (!homepan) g_map.panTo(location_current);
 	} else {
 		marker_current = new google.maps.Marker({
 			position: location_current,

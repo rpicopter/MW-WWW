@@ -332,18 +332,25 @@ MultiWii.prototype.parse_id119 = function(dv,data,len) {
  return ret;
 };
 
+
+MultiWii.prototype.serialize_id121 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id121 = function(dv,data,len) { 
+	var ret = {
+		'gps_mode': dv.getUint8(2,endiness), //
+		'nav_state': dv.getUint8(3,endiness),
+		'mission_action': dv.getUint8(4,endiness),
+		'mission_number': dv.getUint8(5,endiness),
+		'error': dv.getUint8(6,endiness),
+		'target_bearing': dv.getInt16(7,endiness)
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id200 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
-	/*
-	dv.setUint16(2,data["roll"]);
-	dv.setUint16(4,data["pitch"]);
-	dv.setUint16(6,data["yaw"]);
-	dv.setUint16(8,data["throttle"]);
-	dv.setUint16(10,data["aux1"]);
-	dv.setUint16(12,data["aux2"]);
-	dv.setUint16(14,data["aux3"]);
-	dv.setUint16(16,data["aux4"]);
-	*/
 	dv.setInt16(2,data["roll"],endiness);
 	dv.setInt16(4,data["pitch"],endiness);
 	dv.setInt16(6,data["yaw"],endiness);
@@ -354,6 +361,7 @@ MultiWii.prototype.serialize_id200 = function(dv,data) {
 	dv.setInt16(16,data["aux4"],endiness);
 	return 16;
 };
+
 
 MultiWii.prototype.serialize_id202 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
@@ -477,6 +485,44 @@ MultiWii.BOX = [
   "BOXGPSNAV", //20
   "BOXLAND" //21
   //22
+];
+
+MultiWii.GPS_MODE = [
+	"GPS_MODE_NONE",
+	"GPS_MODE_HOLD",
+	"GPS_MODE_RTH",
+	"GPS_MODE_NAV"
+];
+
+MultiWii.NAV_STATE = [
+  "NAV_STATE_NONE",
+  "NAV_STATE_RTH_START",
+  "NAV_STATE_RTH_ENROUTE",
+  "NAV_STATE_HOLD_INFINIT",
+  "NAV_STATE_HOLD_TIMED",
+  "NAV_STATE_WP_ENROUTE",
+  "NAV_STATE_PROCESS_NEXT",
+  "NAV_STATE_DO_JUMP",
+  "NAV_STATE_LAND_START",
+  "NAV_STATE_LAND_IN_PROGRESS",
+  "NAV_STATE_LANDED",
+  "NAV_STATE_LAND_SETTLE",
+  "NAV_STATE_LAND_START_DESCENT"
+];
+
+MultiWii.NAV_ERROR = [
+  "NAV_ERROR_NONE",                //All systems clear
+  "NAV_ERROR_TOOFAR",              //Next waypoint distance is more than safety distance
+  "NAV_ERROR_SPOILED_GPS",         //GPS reception is compromised - Nav paused - copter is adrift !
+  "NAV_ERROR_WP_CRC",              //CRC error reading WP data from EEPROM - Nav stopped
+  "NAV_ERROR_FINISH",              //End flag detected, navigation finished
+  "NAV_ERROR_TIMEWAIT",            //Waiting for poshold timer
+  "NAV_ERROR_INVALID_JUMP",        //Invalid jump target detected, aborting
+  "NAV_ERROR_INVALID_DATA",        //Invalid mission step action code, aborting, copter is adrift
+  "NAV_ERROR_WAIT_FOR_RTH_ALT",    //Waiting to reach RTH Altitude
+  "NAV_ERROR_GPS_FIX_LOST",        //Gps fix lost, aborting mission
+  "NAV_ERROR_DISARMED",            //NAV engine disabled due disarm
+  "NAV_ERROR_LANDING"              //Landing
 ];
 
 MultiWii.STICK = [

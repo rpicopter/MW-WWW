@@ -82,9 +82,7 @@ include('p_'.$current_page.'/content.php');
 <!-- Include all compiled plugins (below), or include individual files as needed -->
 <script src="bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
 <script src="canvasjs/jquery.canvasjs.min.js"></script>
-<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
-
-
+<script src="http://maps.google.com/maps/api/js"></script>
 
 <script src="websockify/util.js"></script>
 <script src="websockify/base64.js"></script>

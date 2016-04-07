@@ -7,9 +7,15 @@
 <p class="llabel">GPS_coord[LAT]: <span class="value" id="gps_coord_lat"/></p>
 <p class="llabel">GPS_coord[LON]: <span class="value" id="gps_coord_lon"/></p>
 <p class="llabel">GPS_altitude (m): <span class="value" id="gps_altitude"/></p>
-<p class="llabel">GPS_speed (m): <span class="value" id="gps_speed"/></p>
+<p class="llabel">GPS_speed (cm/s): <span class="value" id="gps_speed"/></p>
 <p class="llabel">GPS_ground_course (deg*10): <span class="value" id="gps_ground_course"/></p>
 <p class="llabel">GPS_distanceToHome: <span class="value" id="GPS_distanceToHome"/></p>
+<p class="llabel">NAV_gps_mode: <span class="value" id="nav_gps_mode"/></p>
+<p class="llabel">NAV_state: <span class="value" id="nav_state"/></p>
+<p class="llabel">NAV_mission_action: <span class="value" id="nav_mission_action"/></p>
+<p class="llabel">NAV_mission_number: <span class="value" id="nav_mission_number"/></p>
+<p class="llabel">NAV_error: <span class="value" id="nav_error"/></p>
+<p class="llabel">NAV_target_bearing: <span class="value" id="nav_target_bearing"/></p>
 <p class="llabel">computed home distance (m): <span class="value" id="home_distance"/></p>
 <div id="map-container" style="height: 350px" class="row"></div>
 <div class="row">
@@ -37,10 +43,12 @@ function init_map(lat,lon) {
 }
 
 function on_ready() {
+	if (typeof google === 'object' && typeof google.maps === 'object') connected = 1;
+	else connected = 0;
 
 	//google.maps.event.addDomListener(window, 'load', init_map);
 	g_map = null;
-	init_map(0,0);
+	if (connected) init_map(0,0);
 
 	ws = new Websock();
         ws.on('error',default_err);
@@ -67,7 +75,7 @@ function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([106,118]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([106,118,121]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
 	counter = 0;
@@ -83,6 +91,7 @@ function update_pilot_location() {
 }
 
 function set_pilotlocation(position) {
+	if (!connected) return;
 	location_pilot = new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
 
 	if (marker_pilot) {
@@ -110,14 +119,18 @@ function update() {
 		msg = mw.serialize({
 			"id": 106
 		});
-	} else {
+	} else if (counter==1) {
 		msg = mw.serialize({
 			"id": 107
+		});
+	} else if (counter==2) {
+		msg = mw.serialize({
+			"id": 121
 		});
 	}
 
 	counter++;
-	if (counter==2) counter = 0;
+	if (counter==3) counter = 0;
 
 	ws.send(msg);
 }
@@ -138,6 +151,9 @@ function set_homelocation(lat,lon) {
 		setTimeout(function(){$('#info').hide();},10000);
 		return;
 	}
+	
+	if (!connected) return;
+
 	location_home = new google.maps.LatLng(lat,lon);
 
 	if (marker_home) {
@@ -162,6 +178,7 @@ function msg_wp(data) {
 }
 
 function set_currentlocation(lat,lon) {
+	if (!connected) return;
 	location_current = new google.maps.LatLng(lat,lon);
 
 	if (marker_current) {
@@ -201,9 +218,18 @@ function calculate_home_distance() {
 	$("#home_distance").text(distance);
 }
 
+function msg_nav_status(data) {
+	$("#nav_gps_mode").text(MultiWii.GPS_MODE[data["gps_mode"]]);
+	$("#nav_state").text(MultiWii.NAV_STATE[data["nav_state"]]);
+	$("#nav_error").text(MultiWii.NAV_ERROR[data["error"]]);
+	$("#nav_target_bearing").text(data["target_bearing"]); 
+	$("#nav_mission_number").text(data["mission_number"]);  
+	$("#nav_mission_action").text(data["mission_action"]);  
+}
+
 function msg_gps(data) {
 	set_currentlocation(data["gps_coord_lat"],data["gps_coord_lon"]);
-
+	calculate_home_distance();
 	$("#gps_fix").text(data["gps_fix"]); 
 	$("#gps_numsat").text(data["gps_numsat"]);
 	$("#gps_coord_lat").text(data["gps_coord_lat"]);
@@ -230,6 +256,7 @@ function websock_recv() { //we have received a message
 				case 106: msg_gps(data); break;
 				case 107: msg_comp_gps(data); break;
 				case 118: msg_wp(data); break;
+				case 121: msg_nav_status(data); break;
 			}
 		} else {
 			//console.log(data);

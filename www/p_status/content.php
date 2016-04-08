@@ -42,6 +42,7 @@
 <p class="llabel">uart_errors_count: <span class="value" id="uart_errors_count"/></p>
 <p class="llabel">uart_tx_count: <span class="value" id="uart_tx_count"/></p>
 <p class="llabel">uart_rx_count: <span class="value" id="uart_rx_count"/></p>
+<p class="llabel">uart_tx_rate (msg/s): <span class="value" id="uart_tx_rate"/></p>
 </div>
 
 
@@ -68,6 +69,8 @@ function on_ready() {
     );
 
     counter = 0;
+    ms_prev = new Date().getTime(); //used to calculate tx-, rx-rate
+    msg_prev = 0;
 }
 
 function reset_all() {
@@ -138,13 +141,24 @@ function update() {
 }
 
 function lmsg_status(data) {
+	var delta = 0;
+	var ms_now = new Date().getTime();
+	delta = ms_now-ms_prev;
+
+	ms_prev = ms_now;
 	var tx_e = data.uart_tx_count;
 	var rx_e = data.uart_rx_count;
 	var crc_e = data.uart_errors_count;
+	if (msg_prev==0) msg_prev = tx_e;
+	var tx_rate = (tx_e-msg_prev)/(delta/1000);
+	tx_rate = Math.round(tx_rate*10)/10;
+	msg_prev = tx_e;
 
 	$("#uart_rx_count").text(rx_e); 
-	$("#uart_tx_count").text(tx_e);  
+	$("#uart_tx_count").text(tx_e); 
 	$("#uart_errors_count").text(crc_e + "("+(crc_e/rx_e*100).toFixed(3)+"%)");  
+
+	$("#uart_tx_rate").text(tx_rate); 
 	
 }
 

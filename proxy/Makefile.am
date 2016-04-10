@@ -8,5 +8,5 @@ mwconfdir=$(sysconfdir)/mw
 
 install-exec-hook:
 	mkdir -p $(mwconfdir)
-	cp utils/mw-ws.start $(mwconfdir)/
+	cp mw-ws.start $(mwconfdir)/
 	chmod 666 $(mwconfdir)/mw-ws.start

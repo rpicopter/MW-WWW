@@ -294,7 +294,7 @@ void do_proxy(ws_ctx_t *ws_ctx) {
             do {
                 len = tout_end-tout_start;
                 pdbg("To target: parsing %zd bytes from tout_buf+%u\n",len,tout_start);
-                if (!shm_filter_received) 
+                if (!shm_filter_received) //first message is always list of filters
                     bytes = ws_msg_parse_filter(&shm_filter,&shm_filter_length,&shm_filter_received, ws_ctx->tout_buf + tout_start, len);
                 else bytes = ws_msg_parse(&msg,ws_ctx->tout_buf + tout_start, len);
                 pdbg("To target: parsed %zd bytes\n",bytes);
@@ -326,7 +326,7 @@ void do_proxy(ws_ctx_t *ws_ctx) {
             pdbg("Trying to read from target...\n");
             bytes = 0;
             //cout_start = 0; //this is done when client write is complete
-            while (shm_scan_incoming(&msg) && bytes<256) { //we got a message //dont retrieve more than 256 bytes at ones (per proxy loop)
+            while (shm_scan_incoming_f(&msg,shm_filter,shm_filter_length) && bytes<256) { //we got a message //dont retrieve more than 256 bytes at ones (per proxy loop)
                 pdbg("From target: writing into cin_buf+%zd\n",bytes);
                 bytes += ws_msg_serialize(ws_ctx->cin_buf+bytes,&msg);
             }

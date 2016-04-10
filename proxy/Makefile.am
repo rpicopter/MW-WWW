@@ -5,4 +5,8 @@ mw_ws_LDFLAGS =
 mw_ws_LDADD = -lmw_core -lrt -lpthread -lssl -lcrypto -lresolv
 
 mwconfdir=$(sysconfdir)/mw 
-mwconf_DATA = mw-ws.start
+
+install-exec-hook:
+	mkdir -p $(mwconfdir)
+	cp utils/mw-ws.start $(mwconfdir)/
+	chmod 666 $(mwconfdir)/mw-ws.start

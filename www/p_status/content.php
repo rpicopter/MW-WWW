@@ -39,6 +39,7 @@
 <p class="lead">
 	SERVICE STATUS
 </p>
+<p class="llabel">link rssi: <span class="value" id="link_rssi"/></p>
 <p class="llabel">uart_errors_count: <span class="value" id="uart_errors_count"/></p>
 <p class="llabel">uart_tx_count: <span class="value" id="uart_tx_count"/></p>
 <p class="llabel">uart_rx_count: <span class="value" id="uart_rx_count"/></p>
@@ -157,7 +158,7 @@ function lmsg_status(data) {
 	$("#uart_rx_count").text(rx_e); 
 	$("#uart_tx_count").text(tx_e); 
 	$("#uart_errors_count").text(crc_e + "("+(crc_e/rx_e*100).toFixed(3)+"%)");  
-
+	$("#link_rssi").text(data.link_rssi); 
 	$("#uart_tx_rate").text(tx_rate); 
 	
 }

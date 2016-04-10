@@ -4,3 +4,5 @@ mw_ws_CFLAGS = -Wall
 mw_ws_LDFLAGS = 
 mw_ws_LDADD = -lmw_core -lrt -lpthread -lssl -lcrypto -lresolv
 
+mwconfdir=$(sysconfdir)/mw 
+mwconf_DATA = mw-ws.start

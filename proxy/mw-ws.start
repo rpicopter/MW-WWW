@@ -1,0 +1,3 @@
+MultiWii WebSock proxy service
+mw-ws
+8888 >> /tmp/mw-ws.log 2>&1

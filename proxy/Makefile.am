@@ -4,7 +4,7 @@ mw_ws_CFLAGS = -Wall
 mw_ws_LDFLAGS = 
 mw_ws_LDADD = -lmw_core -lrt -lpthread -lssl -lcrypto -lresolv
 
-mwconfdir=$(sysconfdir)/mw 
+mwconfdir=$(sysconfdir)/mw
 
 install-exec-hook:
 	mkdir -p $(mwconfdir)

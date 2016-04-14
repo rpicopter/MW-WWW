@@ -1,58 +1,94 @@
 <div class="starter-template">
-<p>Current time: <span id="current_time"/></p>
-<p>Last updated: <span id="update_time"/></p>
-<hr/>
-<div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor1: <span class="value" id="motor1"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor1v"/>
-    	</div>
-  	</div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor2: <span class="value" id="motor2"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor2v"/>
-    	</div>
-  	</div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor3: <span class="value" id="motor3"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor3v"/>
-    	</div>
-  	</div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor4: <span class="value" id="motor4"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor4v"/>
-    	</div>
-  	</div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor5: <span class="value" id="motor5"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor5v"/>
-    	</div>
-  	</div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor6: <span class="value" id="motor6"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor6v"/>
-    	</div>
-  	</div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor7: <span class="value" id="motor7"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor7v"/>
-    	</div>
-  	</div>
-  	<div class="form-group">
-    	<p class="col-sm-2">motor8: <span class="value" id="motor8"/></p>
-    	<div class="col-sm-10">
-      		<input type="number" class="form-control" id="motor8v"/>
-    	</div>
-  	</div>  	
-</div>   
-<button id="set_motors" type="button" class="btn btn-primary">Set</button>
+	<p>Current time: <span id="current_time"/></p>
+	<p>Last updated: <span id="update_time"/></p>
+	<hr/>
+	<div class="container-fluid">
+
+
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2"></div>
+			<div class="col-xs-4"></div>
+			<div class="col-xs-2"><b>Actual readings:</b></div>
+			<div class="col-xs-2"></div>
+		</div>
+
+
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor1:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor1v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor1"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor2:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor2v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor2"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor3:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor3v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor3"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor4:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor4v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor4"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor5:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor5v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor5"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor6:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor6v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor6"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor7:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor7v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor7"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+		<div class="row">
+			<div class="col-xs-2"></div>
+			<div class="col-xs-2">motor8:</div>
+			<div class="col-xs-4">
+				<input type="number" class="form-control" id="motor8v"/>
+			</div>
+			<div class="col-xs-2"><span class="value" id="motor8"/></div>
+			<div class="col-xs-2"></div>
+		</div>
+	</div>   
+	<div>Set motor function only works in DYNBALANCE mode.</div>
+	<button id="set_motors" type="button" class="btn btn-primary">Set</button>
 </div>
 
 
@@ -63,18 +99,18 @@
 /* It will also install handlers (on) to tell us when the connection is established, message arrives etc */
 function on_ready() {
 	ws = new Websock();
-        ws.on('error',default_err);
-		ws.on('message',websock_recv);
-		ws.on('open',start);
-        ws.open("ws://"+proxy_ip+":"+proxy_port);
+	ws.on('error',default_err);
+	ws.on('message',websock_recv);
+	ws.on('open',start);
+	ws.open("ws://"+proxy_ip+":"+proxy_port);
 
-    mw = new MultiWii();
+	mw = new MultiWii();
 
-    $("#set_motors").click(
-    	function() { set_motors(); } 
-    );
+	$("#set_motors").click(
+		function() { set_motors(); } 
+		);
 
-    firstMsg = false;
+	firstMsg = false;
 }
 
 function start() {

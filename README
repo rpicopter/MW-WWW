@@ -31,7 +31,7 @@ Installation
 
 Running & Testing
 ==============
-- run ./mw-mw -l 8888 before opening the web browser
+- run ./mw-ws -l 8888 before opening the web browser (the mw-ws service will be started automatically if you have mw-config installed)
 
 Proxy
 =======

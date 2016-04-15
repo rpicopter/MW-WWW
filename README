@@ -7,14 +7,15 @@ It consists of two parts:
 - the actual website
 - proxy service that translates any requests from the website and sends them to MW service
 
-
-Website
+Introduction
 =======
 The website is a simple WWW written in HTML + JS + PHP. It is build on top of Bootstrap (JS) and requires HTTP server with PHP5.
 
 It allows the user to monitor, configure and control MultiWii board. The idea behind is that one can use it while in the field from a mobile device.
 
 The website is dynamic (uses JS) to send any requests to the MW through WebSockets.
+
+The proxy (mw-ws) is a service program designed to run on the host board. It is a link between MW service and the website. It uses WebSockets to communicate with the website. Any communication is then forwarded to MW service.
 
 
 Requirements
@@ -33,13 +34,5 @@ Running & Testing
 ==============
 - run ./mw-ws -l 8888 before opening the web browser (the mw-ws service will be started automatically if you have mw-config installed)
 
-Proxy
-=======
-This is a service program designed to run on the host board. It is a link between MW service and the website. It uses WebSockets to communicate with the website. Any communication is then forwarded to MW service.
-
-It is written in C and as such requires compilation.
-
-
- 
 
 

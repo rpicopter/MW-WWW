@@ -1,4 +1,6 @@
-# mm-www 
+# mw-www 
+
+For general information about this project see: https://raw.githubusercontent.com/rpicopter/mw-config/master/README
 
 This is web interface for MultiWii (MW).
 It consists of two parts:
@@ -15,11 +17,21 @@ It allows the user to monitor, configure and control MultiWii board. The idea be
 The website is dynamic (uses JS) to send any requests to the MW through WebSockets.
 
 
-Installation:
-- ensure you have got HTTP server with PHP5 installed and running
-- ensure you have got the proxy service is running
-- copy the WWW folder into your HTTP server
+Requirements
+==============
+- mw-service
+- mw-config (for autostart)
+- HTTP server with PHP5 support
+- openssl (dev) & build tools (autotools, libtool, automake)
 
+Installation
+==============
+- copy the WWW folder into your HTTP server
+- run ./autogen.sh & make & sudo make install inside proxy server
+
+Running & Testing
+==============
+- run ./mw-mw -l 8888 before opening the web browser
 
 Proxy
 =======
@@ -27,17 +39,6 @@ This is a service program designed to run on the host board. It is a link betwee
 
 It is written in C and as such requires compilation.
 
-Dependencies:
-- openssl (dev)
-- libmw (mw-service)
-
-Installation:
-- get the proxy source code
-- run './autogen.sh' (requires autotools and automake)
-- run 'make' (this will create service executable 'mw-ws')
-- run './ms-ws' 
-
-You might want to schedule the run of 'mw-ws' on system startup.
 
  
 

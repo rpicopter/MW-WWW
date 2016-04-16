@@ -40,7 +40,8 @@ MultiWii.prototype.parse_id50 = function(dv,data,len) {
 		"uart_errors_count": dv.getUint16(2,endiness),
 		"uart_rx_count": dv.getUint16(4,endiness),
 		"uart_tx_count": dv.getUint16(6,endiness),
-		"link_rssi": -dv.getUint8(8,endiness)
+		"link_rssi": dv.getInt8(8,endiness),
+		"link_noise": dv.getInt8(9,endiness)
 	}
 
 	return ret;

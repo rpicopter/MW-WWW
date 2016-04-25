@@ -245,7 +245,7 @@ MultiWii.prototype.parse_id113 = function(dv,data,len) {
 	}
 
 	var ret = {
-		"active": s
+		"value": s
 	};
 	return ret;
 };
@@ -378,8 +378,8 @@ MultiWii.prototype.serialize_id202 = function(dv,data) {
 
 MultiWii.prototype.serialize_id203 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
-	for (var i=0;i<data.active.length;i++) {
-		dv.setUint16(2+2*i,parseInt(data.active[i]),endiness);
+	for (var i=0;i<data.value.length;i++) {
+		dv.setUint16(2+2*i,parseInt(data.value[i]),endiness);
 	}
 	return 2*i;
 };

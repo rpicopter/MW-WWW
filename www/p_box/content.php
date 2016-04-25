@@ -53,9 +53,9 @@ function update() {
 }
 
 function msg_box(data) {
-	for (var i=0;i<data.active.length;i++) {
-		$("#BOX"+i+"v").text(data.active[i]);
-		value[i] = data.active[i];
+	for (var i=0;i<data.value.length;i++) {
+		$("#BOX"+i+"v").text(data.value[i]);
+		value[i] = data.value[i];
 	}
 }
 
@@ -93,11 +93,11 @@ function toggle(b) {
 
 	var data = {
 		"id": 203,
-		"active": []
+		"value": []
 	};
 	for (var j=0;j<value.length;j++) {
-		if (j==i) data.active[j] = toggleValue(i);
-		else data.active[j] = value[j];
+		if (j==i) data.value[j] = toggleValue(i);
+		else data.value[j] = value[j];
 	}
 
 	ws.send(mw.serialize(data));

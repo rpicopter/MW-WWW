@@ -351,6 +351,45 @@ MultiWii.prototype.parse_id121 = function(dv,data,len) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id122 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id122 = function(dv,data,len) { 
+	var b1 = dv.getUint8(2,endiness);
+	var b2 = dv.getUint8(3,endiness);
+
+	var ret = {
+		'filtering': MultiWii.getBit(b1,0),
+		'lead_filter': MultiWii.getBit(b1,1),
+		'dont_reset_home_at_arm': MultiWii.getBit(b1,2),
+		'nav_controls_heading': MultiWii.getBit(b1,3),
+		'nav_tail_first': MultiWii.getBit(b1,4),
+		'nav_rth_takeoff_heading': MultiWii.getBit(b1,5),
+		'slow_nav': MultiWii.getBit(b1,6),
+		'wait_for_rth_alt': MultiWii.getBit(b1,7),
+
+		'ignore_throttle': MultiWii.getBit(b2,0),
+		'takeover_baro': MultiWii.getBit(b2,1),
+
+		'wp_radius': dv.getUint16(4,endiness),    // in cm
+		'safe_wp_distance': dv.getUint16(6,endiness),  // in meter
+		'nav_max_altitude': dv.getUint16(8,endiness),  // in meter
+		'nav_speed_max': dv.getUint16(10,endiness), // in cm/s
+		'nav_speed_min': dv.getUint16(12,endiness),  // in cm/s
+		'crosstrack_gain': dv.getUint8(14,endiness),  // * 100 (0-2.56)
+		'nav_bank_max': dv.getUint16(15,endiness),  // degree * 100; (3000 default)
+		'rth_altitude': dv.getUint16(17,endiness),   // in meter
+		'land_speed': dv.getUint8(19,endiness),  // between 50 and 255 (100 approx = 50cm/sec)
+		'fence': dv.getUint8(20,endiness),    // fence control in meters
+		'max_wp_number': dv.getUint8(21,endiness),
+		'checksum': dv.getUint8(22,endiness)
+	};
+
+	return ret;
+};
+
+
 MultiWii.prototype.serialize_id200 = function(dv,data) {
 	//the data starts at 2nd byte (byte 0 and 1 is reserved and set automatically for id and length)
 	dv.setInt16(2,data["roll"],endiness);

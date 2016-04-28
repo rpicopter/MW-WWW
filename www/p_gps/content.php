@@ -75,7 +75,7 @@ function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([106,118,121]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([106,118,121,122]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
 	counter = 0;
@@ -127,10 +127,14 @@ function update() {
 		msg = mw.serialize({
 			"id": 121
 		});
-	}
+	} else if (counter==3) {
+		msg = mw.serialize({
+			"id": 122
+		});
+	}	
 
 	counter++;
-	if (counter==3) counter = 0;
+	if (counter==4) counter = 0;
 
 	ws.send(msg);
 }
@@ -218,6 +222,10 @@ function calculate_home_distance() {
 	$("#home_distance").text(distance);
 }
 
+function msg_nav_config(data) {
+	console.log(data);
+}
+
 function msg_nav_status(data) {
 	$("#nav_gps_mode").text(MultiWii.GPS_MODE[data["gps_mode"]]);
 	$("#nav_state").text(MultiWii.NAV_STATE[data["nav_state"]]);
@@ -257,6 +265,7 @@ function websock_recv() { //we have received a message
 				case 107: msg_comp_gps(data); break;
 				case 118: msg_wp(data); break;
 				case 121: msg_nav_status(data); break;
+				case 122: msg_nav_config(data); break;
 			}
 		} else {
 			//console.log(data);

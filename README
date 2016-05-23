@@ -27,7 +27,7 @@ Requirements
 
 Installation
 ==============
-- copy the WWW folder into your HTTP server
+- copy the WWW folder into your HTTP server (suggest to rename it to 'mw')
 - run ./autogen.sh & make & sudo make install inside proxy server
 
 Running & Testing

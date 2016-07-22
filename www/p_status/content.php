@@ -21,6 +21,14 @@
 <p class="llabel">currentSet: <span class="value" id="currentSet"/></p>
 <hr/>
 <p class="lead">
+	ANALOG
+</p>
+<p class="llabel">vbat (1/10 V): <span class="value" id="vbat"/></p>
+<p class="llabel">intPowerMeterSum: <span class="value" id="intPowerMeterSum"/></p>
+<p class="llabel">rssi [1-1023]: <span class="value" id="rssi"/></p>
+<p class="llabel">amperage: <span class="value" id="amperage"/></p>
+<hr/>
+<p class="lead">
 	MISC
 </p>
 <p class="llabel">intPowerTrigger1: <span class="value" id="intPowerTrigger1"/></p>
@@ -102,7 +110,7 @@ function start() {
 	//console.log("Connected to mw proxy");
 	var msg;
 
-	msg = mw.filters([50,100,101,114]); //filters need to be sent as the first message on a new connection to mw proxy
+	msg = mw.filters([50,100,101,110,114]); //filters need to be sent as the first message on a new connection to mw proxy
 	ws.send( msg );
 
 	msg = mw.serialize({ //prepere a request message
@@ -132,13 +140,20 @@ function update() {
 
 	if (counter==2) {
 		msg = mw.serialize({
+			"id": 110
+		});
+		ws.send(msg);
+	} 
+
+	if (counter==3) {
+		msg = mw.serialize({
 			"id": 114
 		});
 		ws.send(msg);
 	} 
 
 	counter++;
-	if (counter==3) counter = 0;
+	if (counter==4) counter = 0;
 }
 
 function lmsg_status(data) {
@@ -168,6 +183,13 @@ function msg_ident(data) {
 	$("#msp_version").text(data.msp_version); 
 	$("#capability").text(JSON.stringify(data.capability)); 
 	$("#multitype").text(MultiWii.MultiType[data.multitype]); 
+}
+
+function msg_analog(data) {
+	$("#vbat").text(data.cycleTime); 
+	$("#intPowerMeterSum").text(data.intPowerMeterSum); 
+	$("#rssi").text(JSON.stringify(data.rssi)); 
+	$("#amperage").text(data.amperage); 
 }
 
 function msg_status(data) {
@@ -204,6 +226,7 @@ function websock_recv() { //we have received a message
 				case 50: lmsg_status(data); break;
 				case 100: msg_ident(data); break;
 				case 101: msg_status(data); break;
+				case 110: msg_analog(data); break;
 				case 114: msg_misc(data); break;
 			}
 		} else {

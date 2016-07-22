@@ -216,6 +216,20 @@ MultiWii.prototype.parse_id109 = function(dv,data,len) {
 	return ret;
 };
 
+MultiWii.prototype.serialize_id110 = function(dv,data) {
+	return 0;
+};
+
+MultiWii.prototype.parse_id110 = function(dv,data,len) { 
+	var ret = {
+		'vbat': dv.getUint8(2,endiness),
+		'intPowerMeterSum': dv.getUint16(3,endiness),
+		'rssi': dv.getUint16(5,endiness),
+		'amperage': dv.getUint16(7,endiness)
+	}
+	return ret;
+};
+
 MultiWii.prototype.serialize_id112 = function(dv) {
 	return 0;
 };

@@ -186,7 +186,7 @@ function msg_ident(data) {
 }
 
 function msg_analog(data) {
-	$("#vbat").text(data.cycleTime); 
+	$("#vbat").text(data.vbat); 
 	$("#intPowerMeterSum").text(data.intPowerMeterSum); 
 	$("#rssi").text(JSON.stringify(data.rssi)); 
 	$("#amperage").text(data.amperage); 

@@ -227,6 +227,7 @@ MultiWii.prototype.parse_id110 = function(dv,data,len) {
 		'rssi': dv.getUint16(5,endiness),
 		'amperage': dv.getUint16(7,endiness)
 	}
+
 	return ret;
 };
 
